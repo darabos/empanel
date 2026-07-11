@@ -454,6 +454,7 @@ function App() {
                 setVideoMetadata({ width, height })
               }}
               onSelectBubble={setSelectedBubbleId}
+              onDeselectBubble={() => setSelectedBubbleId(null)}
               onStartMoveBubble={startMoveBubble}
               onStartResizeBubble={startResizeBubble}
               onStartTailDrag={startTailDrag}

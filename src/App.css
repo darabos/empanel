@@ -152,16 +152,18 @@ button:disabled {
   padding: 8px;
   cursor: move;
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .bubble-card span {
+  font-family: 'Grandstander', 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
   font-size: 0.9rem;
   line-height: 1.2;
   overflow-wrap: anywhere;
-}
-
-.bubble-card.selected {
-  border-color: #111;
+  width: 100%;
 }
 
 .resize-handle {

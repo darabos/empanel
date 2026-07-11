@@ -21,6 +21,7 @@ type WorkspaceCanvasProps = {
   onTimelineSync: () => void
   onLoadedMetadata: (event: React.SyntheticEvent<HTMLVideoElement>) => void
   onSelectBubble: (bubbleId: string) => void
+  onDeselectBubble: () => void
   onStartMoveBubble: (event: React.PointerEvent<HTMLDivElement>, bubble: Bubble) => void
   onStartResizeBubble: (event: React.PointerEvent<HTMLButtonElement>, bubble: Bubble) => void
   onStartTailDrag: (event: React.PointerEvent<HTMLButtonElement>, bubble: Bubble) => void
@@ -46,6 +47,7 @@ export function WorkspaceCanvas({
   onTimelineSync,
   onLoadedMetadata,
   onSelectBubble,
+  onDeselectBubble,
   onStartMoveBubble,
   onStartResizeBubble,
   onStartTailDrag,
@@ -96,7 +98,20 @@ export function WorkspaceCanvas({
           event.preventDefault()
           onWheel(event)
         }}
-        onPointerDown={onViewportPointerDown}
+        onPointerDown={(event) => {
+          const target = event.target as HTMLElement
+          const clickedOnBubble = Boolean(
+            target.closest('.bubble-card') ||
+              target.closest('.resize-handle') ||
+              target.closest('.tail-handle'),
+          )
+
+          if (!clickedOnBubble) {
+            onDeselectBubble()
+          }
+
+          onViewportPointerDown(event)
+        }}
       >
         <div
           className="zoom-layer"
@@ -154,24 +169,28 @@ export function WorkspaceCanvas({
                     onClick={() => onSelectBubble(bubble.id)}
                   >
                     <span>{bubble.text || '...'}</span>
-                    <button
-                      type="button"
-                      className="resize-handle"
-                      onPointerDown={(event) => onStartResizeBubble(event, bubble)}
-                      aria-label="Resize bubble"
-                    />
+                    {isSelected && (
+                      <button
+                        type="button"
+                        className="resize-handle"
+                        onPointerDown={(event) => onStartResizeBubble(event, bubble)}
+                        aria-label="Resize bubble"
+                      />
+                    )}
                   </div>
 
-                  <button
-                    type="button"
-                    className={`tail-handle ${isSelected ? 'selected' : ''}`}
-                    style={{
-                      left: `${bubble.tailX * 100}%`,
-                      top: `${bubble.tailY * 100}%`,
-                    }}
-                    onPointerDown={(event) => onStartTailDrag(event, bubble)}
-                    aria-label="Move tail point"
-                  />
+                  {isSelected && (
+                    <button
+                      type="button"
+                      className="tail-handle selected"
+                      style={{
+                        left: `${bubble.tailX * 100}%`,
+                        top: `${bubble.tailY * 100}%`,
+                      }}
+                      onPointerDown={(event) => onStartTailDrag(event, bubble)}
+                      aria-label="Move tail point"
+                    />
+                  )}
                 </div>
               )
             })}
