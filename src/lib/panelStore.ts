@@ -2,7 +2,7 @@ import { openDB, type DBSchema } from 'idb'
 import type { PanelRasterRecord, PanelRecord } from '../types/annotation'
 
 const DB_NAME = 'video-annotator-db'
-const DB_VERSION = 3
+const DB_VERSION = 1
 const PANEL_STORE = 'panels'
 const PANEL_RASTER_STORE = 'panelRasters'
 
@@ -26,16 +26,12 @@ type PanelDb = DBSchema & {
 
 const panelDbPromise = openDB<PanelDb>(DB_NAME, DB_VERSION, {
   upgrade(database) {
-    if (!database.objectStoreNames.contains(PANEL_STORE)) {
-      const panels = database.createObjectStore(PANEL_STORE, { keyPath: 'id' })
-      panels.createIndex('by-updatedAt', 'updatedAt')
-      panels.createIndex('by-timestamp', 'timestamp')
-    }
+    const panels = database.createObjectStore(PANEL_STORE, { keyPath: 'id' })
+    panels.createIndex('by-updatedAt', 'updatedAt')
+    panels.createIndex('by-timestamp', 'timestamp')
 
-    if (!database.objectStoreNames.contains(PANEL_RASTER_STORE)) {
-      const panelRasters = database.createObjectStore(PANEL_RASTER_STORE, { keyPath: 'panelId' })
-      panelRasters.createIndex('by-updatedAt', 'updatedAt')
-    }
+    const panelRasters = database.createObjectStore(PANEL_RASTER_STORE, { keyPath: 'panelId' })
+    panelRasters.createIndex('by-updatedAt', 'updatedAt')
   },
 })
 

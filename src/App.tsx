@@ -195,7 +195,8 @@ function App() {
 
         setSavedVideoHandle(null)
         setShowLoadVideoModal(false)
-      } catch {
+      } catch (error) {
+        console.error('Failed to load saved video handle:', error)
         // Ignore restore failures and keep manual file selection available.
       }
     }
