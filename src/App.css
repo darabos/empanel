@@ -43,24 +43,6 @@ button:disabled {
   opacity: 0.45;
 }
 
-.dropzone {
-  border: 2px dashed #2d2d2d;
-  border-radius: 12px;
-  min-height: 620px;
-  background: linear-gradient(160deg, #f5edce 0%, #efe8ff 50%, #ddf7f5 100%);
-  padding: 16px;
-}
-
-.dropzone-message {
-  min-height: 620px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  text-align: center;
-}
-
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
@@ -146,7 +128,7 @@ button:disabled {
 .bubble-card {
   position: absolute;
   border: 2px solid #fff;
-  border-radius: 14px;
+  border-radius: 24px;
   background: #fff;
   color: #111;
   padding: 8px;
@@ -193,18 +175,6 @@ button:disabled {
 
 .tail-handle.selected {
   background: #4bf0cd;
-}
-
-.pan-overlay {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  pointer-events: none;
-  font-weight: 600;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 4px 10px;
-  border-radius: 999px;
 }
 
 .inspector {
@@ -320,6 +290,7 @@ button:disabled {
 
 .panel-library-header h2 {
   margin: 0;
+  flex: 1;
 }
 
 .panel-list {

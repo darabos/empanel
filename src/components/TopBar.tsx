@@ -3,15 +3,13 @@ type TopBarProps = {
   onOpenVideo: () => void
   onAddBubble: () => void
   onResetView: () => void
-  onClearAll: () => void
 }
 
-export function TopBar({ hasVideo, onOpenVideo, onAddBubble, onResetView, onClearAll }: TopBarProps) {
+export function TopBar({ hasVideo, onOpenVideo, onAddBubble, onResetView }: TopBarProps) {
   return (
     <header className="topbar">
       <div>
-        <h1>Frame Bubble Studio</h1>
-        <p>Drop a local video, seek with native controls, zoom in, and annotate with speech bubbles.</p>
+        <h1>Unboarding</h1>
       </div>
       <div className="topbar-actions">
         <button type="button" onClick={onOpenVideo}>
@@ -22,9 +20,6 @@ export function TopBar({ hasVideo, onOpenVideo, onAddBubble, onResetView, onClea
         </button>
         <button type="button" onClick={onResetView} disabled={!hasVideo}>
           Reset View
-        </button>
-        <button type="button" onClick={onClearAll}>
-          Clear localStorage
         </button>
       </div>
     </header>

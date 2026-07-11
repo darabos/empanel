@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
-import { BubbleInspector } from './components/BubbleInspector'
+import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { WorkspaceCanvas } from './components/WorkspaceCanvas'
 import { clamp, cloneBubble, cloneTransform, generateBubbleId } from './lib/annotationMath'
@@ -515,7 +515,6 @@ function App() {
       return
     }
 
-    event.preventDefault()
     const viewportRect = viewportRef.current.getBoundingClientRect()
     const pointerX = event.clientX - viewportRect.left
     const pointerY = event.clientY - viewportRect.top
@@ -534,27 +533,6 @@ function App() {
 
     setTransform(nextTransform)
     commitSnapshot(nextTransform, bubbles)
-  }
-
-  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-
-    const file = event.dataTransfer.files?.[0]
-    if (!file || !file.type.startsWith('video/')) {
-      return
-    }
-
-    if ('indexedDB' in window) {
-      clearCurrentVideoHandle().catch(() => {
-        // Keep drag-and-drop working even if handle cleanup fails.
-      })
-    }
-
-    setSavedVideoHandle(null)
-    setShowLoadVideoModal(false)
-    setSavedVideoError(null)
-
-    setVideoFromFile(file)
   }
 
   async function handleOpenVideo() {
@@ -619,7 +597,7 @@ function App() {
       bottom: 0.42,
       tailX: 0.52,
       tailY: 0.5,
-      text: 'Speech bubble',
+      text: '',
     }
 
     const next = [...bubbles, bubble]
@@ -880,25 +858,9 @@ function App() {
 
   return (
     <main className="app-shell">
-      <TopBar
-        hasVideo={Boolean(videoUrl)}
-        onOpenVideo={handleOpenVideo}
-        onAddBubble={handleAddBubble}
-        onResetView={resetView}
-        onClearAll={clearAllAnnotations}
-      />
-
       <section
-        className="dropzone"
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={handleDrop}
+        className="editor"
       >
-        {!videoUrl && (
-          <div className="dropzone-message">
-            <strong>Drag a video file here</strong>
-            <span>Or use Open Video to save a file handle and reload it later.</span>
-          </div>
-        )}
 
         {videoUrl && (
           <div className="workspace-grid">
@@ -933,10 +895,13 @@ function App() {
               onStartTailDrag={startTailDrag}
             />
 
-            <BubbleInspector
+            <Sidebar
               selectedBubble={selectedBubble}
               onUpdateBubble={updateCurrentBubble}
               onDeleteSelectedBubble={handleDeleteSelectedBubble}
+              onOpenVideo={handleOpenVideo}
+              onAddBubble={handleAddBubble}
+              onResetView={resetView}
             />
           </div>
         )}
@@ -948,6 +913,11 @@ function App() {
           <button type="button" onClick={handleCreateNewPanel}>
             New panel
           </button>
+          {activePanelId && (
+            <button type="button" onClick={() => handleDeletePanel(activePanelId)}>
+              Delete panel
+            </button>
+          )}
         </div>
         {panels.length === 0 && <p>No panels yet.</p>}
         {panels.length > 0 && (
@@ -965,9 +935,6 @@ function App() {
                     )}
                   </span>
                   <span>{panel.timestamp.toFixed(2)}s</span>
-                </button>
-                <button type="button" onClick={() => handleDeletePanel(panel.id)}>
-                  Remove
                 </button>
               </li>
             ))}

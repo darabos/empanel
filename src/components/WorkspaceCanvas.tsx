@@ -73,7 +73,6 @@ export function WorkspaceCanvas({
   return (
     <div className="canvas-column">
       <div className="canvas-toolbar">
-        <span>{videoName}</span>
         <span>Time: {currentTime.toFixed(2)}s</span>
         <span>Zoom: {zoomPercentage}%</span>
         <span>Mode: {panModeEnabled ? 'Pan' : 'Seek'}</span>
@@ -83,7 +82,7 @@ export function WorkspaceCanvas({
             checked={panModeEnabled}
             onChange={(event) => onPanModeChange(event.target.checked)}
           />
-          Pan mode (off = Seek mode)
+          Pan mode
         </label>
       </div>
 
@@ -95,7 +94,6 @@ export function WorkspaceCanvas({
             return
           }
 
-          event.preventDefault()
           onWheel(event)
         }}
         onPointerDown={(event) => {
@@ -194,8 +192,6 @@ export function WorkspaceCanvas({
                 </div>
               )
             })}
-
-            {panModeEnabled && <div className="pan-overlay">Pan mode enabled</div>}
           </div>
         </div>
       </div>

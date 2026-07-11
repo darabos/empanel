@@ -72,7 +72,7 @@ function drawTail(context: CanvasRenderingContext2D, bubble: Bubble, width: numb
   const perpX = -vectorY / vectorLength
   const perpY = vectorX / vectorLength
 
-  const tailHalfWidth = Math.max(6, Math.min(width, height) * 0.012)
+  const tailHalfWidth = Math.min(width, height) * 0.03
   const base1X = centerX + perpX * tailHalfWidth
   const base1Y = centerY + perpY * tailHalfWidth
   const base2X = centerX - perpX * tailHalfWidth
@@ -93,7 +93,7 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const bubbleWidth = (bubble.right - bubble.left) * width
   const bubbleHeight = (bubble.bottom - bubble.top) * height
 
-  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, Math.max(8, bubbleWidth * 0.06))
+  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, bubbleWidth * 0.2)
   context.fillStyle = '#ffffff'
   context.fill()
   context.lineWidth = Math.max(2, Math.min(width, height) * 0.003)
