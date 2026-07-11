@@ -5,6 +5,12 @@ import { TopBar } from './components/TopBar'
 import { WorkspaceCanvas } from './components/WorkspaceCanvas'
 import { clamp, cloneBubble, cloneTransform, generateBubbleId } from './lib/annotationMath'
 import {
+  clearCurrentVideoHandle,
+  getCurrentVideoHandle,
+  type PersistedVideoHandle,
+  saveCurrentVideoHandle,
+} from './lib/fileHandleStore'
+import {
   DEFAULT_TRANSFORM,
   STORAGE_KEY,
   getStateAtTime,
@@ -19,6 +25,12 @@ import type {
   VideoMetadata,
   ZoomPanState,
 } from './types/annotation'
+
+declare global {
+  interface Window {
+    showOpenFilePicker?: (options?: unknown) => Promise<unknown[]>
+  }
+}
 
 function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -36,6 +48,10 @@ function App() {
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [panModeEnabled, setPanModeEnabled] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 1, height: 1 })
+  const [savedVideoHandle, setSavedVideoHandle] = useState<PersistedVideoHandle | null>(null)
+  const [showLoadVideoModal, setShowLoadVideoModal] = useState(false)
+  const [isLoadingSavedVideo, setIsLoadingSavedVideo] = useState(false)
+  const [savedVideoError, setSavedVideoError] = useState<string | null>(null)
 
   const transformRef = useRef<ZoomPanState>(transform)
   const bubblesRef = useRef<Bubble[]>(bubbles)
@@ -120,6 +136,90 @@ function App() {
       observer.disconnect()
     }
   }, [videoUrl])
+
+  useEffect(() => {
+    async function loadSavedHandle() {
+      if (!('indexedDB' in window)) {
+        return
+      }
+
+      try {
+        const handle = await getCurrentVideoHandle()
+        if (!handle) {
+          return
+        }
+
+        const permission = await handle.queryPermission({ mode: 'read' })
+
+        if (permission === 'granted') {
+          const file = await handle.getFile()
+          setVideoFromFile(file)
+          setSavedVideoHandle(handle)
+          setShowLoadVideoModal(false)
+          return
+        }
+
+        if (permission === 'prompt') {
+          setSavedVideoHandle(handle)
+          setShowLoadVideoModal(true)
+          return
+        }
+
+        setSavedVideoHandle(null)
+        setShowLoadVideoModal(false)
+      } catch {
+        // Ignore restore failures and keep manual file selection available.
+      }
+    }
+
+    loadSavedHandle()
+  }, [])
+
+  async function handleLoadSavedVideo() {
+    if (!savedVideoHandle) {
+      return
+    }
+
+    setIsLoadingSavedVideo(true)
+    setSavedVideoError(null)
+
+    try {
+      let permission = await savedVideoHandle.queryPermission({ mode: 'read' })
+
+      if (permission === 'prompt') {
+        if (typeof savedVideoHandle.requestPermission === 'function') {
+          permission = await savedVideoHandle.requestPermission({ mode: 'read' })
+        } else {
+          permission = 'denied'
+        }
+      }
+
+      if (permission !== 'granted') {
+        setSavedVideoError('Permission was not granted. Please allow access to load this video.')
+        return
+      }
+
+      const file = await savedVideoHandle.getFile()
+      setVideoFromFile(file)
+      setShowLoadVideoModal(false)
+      setSavedVideoError(null)
+    } catch {
+      setSavedVideoError('Could not load the saved video handle. Please use Open Video.')
+    } finally {
+      setIsLoadingSavedVideo(false)
+    }
+  }
+
+  function setVideoFromFile(file: File) {
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl)
+    }
+
+    const nextUrl = URL.createObjectURL(file)
+    setVideoUrl(nextUrl)
+    setVideoName(file.name)
+    setCurrentTime(0)
+  }
 
   function commitSnapshot(nextTransform: ZoomPanState, nextBubbles: Bubble[]) {
     setSnapshots((previous) =>
@@ -210,14 +310,61 @@ function App() {
       return
     }
 
-    if (videoUrl) {
-      URL.revokeObjectURL(videoUrl)
+    if ('indexedDB' in window) {
+      clearCurrentVideoHandle().catch(() => {
+        // Keep drag-and-drop working even if handle cleanup fails.
+      })
     }
 
-    const nextUrl = URL.createObjectURL(file)
-    setVideoUrl(nextUrl)
-    setVideoName(file.name)
-    setCurrentTime(0)
+    setSavedVideoHandle(null)
+    setShowLoadVideoModal(false)
+    setSavedVideoError(null)
+
+    setVideoFromFile(file)
+  }
+
+  async function handleOpenVideo() {
+    if (typeof window.showOpenFilePicker !== 'function') {
+      return
+    }
+
+    try {
+      const [selected] = await window.showOpenFilePicker({
+        types: [
+          {
+            description: 'Video',
+            accept: {
+              'video/*': ['.mp4', '.mkv', '.mov'],
+            },
+          },
+        ],
+      })
+
+      if (!selected || typeof selected !== 'object') {
+        return
+      }
+
+      const handle = selected as {
+        getFile: () => Promise<File>
+      }
+
+      if (typeof handle.getFile !== 'function') {
+        return
+      }
+
+      const file = await handle.getFile()
+      setVideoFromFile(file)
+
+      if ('indexedDB' in window) {
+        await saveCurrentVideoHandle(selected)
+      }
+
+      setSavedVideoHandle(handle as PersistedVideoHandle)
+      setShowLoadVideoModal(false)
+      setSavedVideoError(null)
+    } catch {
+      // Ignore cancellation and keep the app interactive.
+    }
   }
 
   function handleTimelineSync() {
@@ -410,6 +557,7 @@ function App() {
     <main className="app-shell">
       <TopBar
         hasVideo={Boolean(videoUrl)}
+        onOpenVideo={handleOpenVideo}
         onAddBubble={handleAddBubble}
         onResetView={resetView}
         onClearAll={clearAllAnnotations}
@@ -423,7 +571,7 @@ function App() {
         {!videoUrl && (
           <div className="dropzone-message">
             <strong>Drag a video file here</strong>
-            <span>Your video remains local and is never persisted to storage.</span>
+            <span>Or use Open Video to save a file handle and reload it later.</span>
           </div>
         )}
 
@@ -468,6 +616,31 @@ function App() {
           </div>
         )}
       </section>
+
+      {showLoadVideoModal && savedVideoHandle && (
+        <div className="load-video-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="load-video-modal">
+            <h2>Saved Video Found</h2>
+            <p>A previously selected video handle is available. Load video to continue where you left off.</p>
+            {savedVideoError && <p className="load-video-error">{savedVideoError}</p>}
+            <div className="load-video-actions">
+              <button type="button" onClick={handleLoadSavedVideo} disabled={isLoadingSavedVideo}>
+                {isLoadingSavedVideo ? 'Loading...' : 'Load video'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLoadVideoModal(false)
+                  setSavedVideoError(null)
+                }}
+                disabled={isLoadingSavedVideo}
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

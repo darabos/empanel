@@ -259,6 +259,46 @@ button:disabled {
   padding-left: 18px;
 }
 
+.load-video-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.load-video-modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border: 1px solid rgba(45, 45, 45, 0.22);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2);
+}
+
+.load-video-modal h2 {
+  margin: 0 0 8px;
+}
+
+.load-video-modal p {
+  margin: 0;
+}
+
+.load-video-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.load-video-error {
+  margin-top: 10px;
+  color: #9d1a1a;
+}
+
 @media (max-width: 1080px) {
   .app-shell {
     padding: 16px;
