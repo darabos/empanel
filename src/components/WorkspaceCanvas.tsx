@@ -119,15 +119,26 @@ export function WorkspaceCanvas({
               const height = bubble.bottom - bubble.top
               const centerX = bubble.left + width / 2
               const centerY = bubble.top + height / 2
+              const baseX = centerX * 100
+              const baseY = centerY * 100
+              const tipX = bubble.tailX * 100
+              const tipY = bubble.tailY * 100
+              const vectorX = tipX - baseX
+              const vectorY = tipY - baseY
+              const vectorLength = Math.hypot(vectorX, vectorY) || 1
+              const perpX = -vectorY / vectorLength
+              const perpY = vectorX / vectorLength
+              const tailHalfWidth = 1.2
+              const base1X = baseX + perpX * tailHalfWidth
+              const base1Y = baseY + perpY * tailHalfWidth
+              const base2X = baseX - perpX * tailHalfWidth
+              const base2Y = baseY - perpY * tailHalfWidth
 
               return (
                 <div key={bubble.id}>
                   <svg className="tail-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <line
-                      x1={centerX * 100}
-                      y1={centerY * 100}
-                      x2={bubble.tailX * 100}
-                      y2={bubble.tailY * 100}
+                    <polygon
+                      points={`${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`}
                     />
                   </svg>
 

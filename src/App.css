@@ -139,18 +139,16 @@ button:disabled {
   pointer-events: none;
 }
 
-.tail-svg line {
-  stroke: #ffd22f;
-  stroke-width: 1.7;
-  stroke-linecap: round;
+.tail-svg polygon {
+  fill: #fff;
 }
 
 .bubble-card {
   position: absolute;
-  border: 2px solid #fce585;
+  border: 2px solid #fff;
   border-radius: 14px;
-  background: rgba(34, 34, 34, 0.82);
-  color: #fff;
+  background: #fff;
+  color: #111;
   padding: 8px;
   cursor: move;
   pointer-events: auto;
@@ -163,7 +161,7 @@ button:disabled {
 }
 
 .bubble-card.selected {
-  border-color: #4bf0cd;
+  border-color: #111;
 }
 
 .resize-handle {
