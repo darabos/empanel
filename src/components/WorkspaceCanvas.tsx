@@ -139,7 +139,7 @@ export function WorkspaceCanvas({
               const vectorLength = Math.hypot(vectorX, vectorY) || 1
               const perpX = -vectorY / vectorLength
               const perpY = vectorX / vectorLength
-              const tailHalfWidth = 1.2
+              const tailHalfWidth = 3
               const base1X = baseX + perpX * tailHalfWidth
               const base1Y = baseY + perpY * tailHalfWidth
               const base2X = baseX - perpX * tailHalfWidth

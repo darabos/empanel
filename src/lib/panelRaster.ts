@@ -93,7 +93,7 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const bubbleWidth = (bubble.right - bubble.left) * width
   const bubbleHeight = (bubble.bottom - bubble.top) * height
 
-  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, bubbleWidth * 0.2)
+  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, 200)
   context.fillStyle = '#ffffff'
   context.fill()
   context.lineWidth = Math.max(2, Math.min(width, height) * 0.003)
@@ -103,7 +103,7 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const text = bubble.text || '...'
   const padding = Math.max(8, Math.min(width, height) * 0.01)
   const maxWidth = Math.max(20, bubbleWidth - padding * 2)
-  const fontSize = Math.max(14, Math.min(36, bubbleHeight * 0.28))
+  const fontSize = 50
   const lineHeight = fontSize * 1.2
 
   context.fillStyle = '#111111'
