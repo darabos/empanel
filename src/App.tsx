@@ -12,10 +12,15 @@ import {
 } from './lib/fileHandleStore'
 import {
   clearAllPanels,
+  clearAllPanelRasters,
   deletePanelById,
+  deletePanelRasterByPanelId,
+  getPanelRasterByPanelId,
   listPanelsByUpdatedAtDesc,
+  upsertPanelRaster,
   upsertPanel,
 } from './lib/panelStore'
+import { renderPanelRasterBlob } from './lib/panelRaster'
 import {
   DEFAULT_TRANSFORM,
   STORAGE_KEY,
@@ -61,9 +66,11 @@ function App() {
   const [savedVideoError, setSavedVideoError] = useState<string | null>(null)
   const [panels, setPanels] = useState<PanelRecord[]>([])
   const [activePanelId, setActivePanelId] = useState<string | null>(null)
+  const [panelThumbnailUrls, setPanelThumbnailUrls] = useState<Record<string, string>>({})
 
   const transformRef = useRef<ZoomPanState>(transform)
   const bubblesRef = useRef<Bubble[]>(bubbles)
+  const panelThumbnailUrlsRef = useRef<Record<string, string>>({})
 
   const selectedBubble = useMemo(
     () => bubbles.find((bubble) => bubble.id === selectedBubbleId) ?? null,
@@ -123,6 +130,18 @@ function App() {
   useEffect(() => {
     bubblesRef.current = bubbles
   }, [bubbles])
+
+  useEffect(() => {
+    panelThumbnailUrlsRef.current = panelThumbnailUrls
+  }, [panelThumbnailUrls])
+
+  useEffect(() => {
+    return () => {
+      Object.values(panelThumbnailUrlsRef.current).forEach((url) => {
+        URL.revokeObjectURL(url)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -223,6 +242,70 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function hydratePanelThumbnails() {
+      const panelIds = panels.map((panel) => panel.id)
+      if (panelIds.length === 0) {
+        setPanelThumbnailUrls((previous) => {
+          Object.values(previous).forEach((url) => {
+            URL.revokeObjectURL(url)
+          })
+          return {}
+        })
+        return
+      }
+
+      const rasterPairs = await Promise.all(
+        panelIds.map(async (panelId) => {
+          try {
+            const raster = await getPanelRasterByPanelId(panelId)
+            return [panelId, raster?.blob ?? null] as const
+          } catch {
+            return [panelId, null] as const
+          }
+        }),
+      )
+
+      if (cancelled) {
+        return
+      }
+
+      setPanelThumbnailUrls((previous) => {
+        const next: Record<string, string> = {}
+
+        rasterPairs.forEach(([panelId, blob]) => {
+          if (!blob) {
+            return
+          }
+
+          const previousUrl = previous[panelId]
+          if (previousUrl) {
+            next[panelId] = previousUrl
+            return
+          }
+
+          next[panelId] = URL.createObjectURL(blob)
+        })
+
+        Object.entries(previous).forEach(([panelId, url]) => {
+          if (!next[panelId]) {
+            URL.revokeObjectURL(url)
+          }
+        })
+
+        return next
+      })
+    }
+
+    hydratePanelThumbnails()
+
+    return () => {
+      cancelled = true
+    }
+  }, [panels])
+
   async function handleLoadSavedVideo() {
     if (!savedVideoHandle) {
       return
@@ -267,6 +350,47 @@ function App() {
     setVideoUrl(nextUrl)
     setVideoName(file.name)
     setCurrentTime(0)
+  }
+
+  async function captureAndPersistPanelRaster(panel: PanelRecord) {
+    if (!videoRef.current) {
+      return
+    }
+
+    const rasterBlob = await renderPanelRasterBlob({
+      video: videoRef.current,
+      bubbles: panel.bubbles,
+      width: videoMetadata.width,
+      height: videoMetadata.height,
+      mimeType: 'image/webp',
+      quality: 0.92,
+    })
+
+    if (!rasterBlob) {
+      return
+    }
+
+    await upsertPanelRaster({
+      panelId: panel.id,
+      width: videoMetadata.width,
+      height: videoMetadata.height,
+      mimeType: rasterBlob.type || 'image/webp',
+      blob: rasterBlob,
+      updatedAt: Date.now(),
+    })
+
+    const nextUrl = URL.createObjectURL(rasterBlob)
+    setPanelThumbnailUrls((previous) => {
+      const existingUrl = previous[panel.id]
+      if (existingUrl) {
+        URL.revokeObjectURL(existingUrl)
+      }
+
+      return {
+        ...previous,
+        [panel.id]: nextUrl,
+      }
+    })
   }
 
   function createPanelId() {
@@ -321,6 +445,10 @@ function App() {
 
       upsertPanel(updated).catch(() => {
         // Keep UI responsive even if IndexedDB write fails.
+      })
+
+      captureAndPersistPanelRaster(updated).catch(() => {
+        // Raster generation should never block panel updates.
       })
 
       const withoutExisting = previous.filter((panel) => panel.id !== existing.id)
@@ -653,9 +781,17 @@ function App() {
     setPanels([freshPanel])
     setActivePanelId(freshPanel.id)
     applyPanelToEditor(freshPanel)
+    setPanelThumbnailUrls((previous) => {
+      Object.values(previous).forEach((url) => {
+        URL.revokeObjectURL(url)
+      })
+      return {}
+    })
     localStorage.removeItem(STORAGE_KEY)
     clearAllPanels()
+      .then(() => clearAllPanelRasters())
       .then(() => upsertPanel(freshPanel))
+      .then(() => captureAndPersistPanelRaster(freshPanel))
       .catch(() => {
         // Keep clear action non-blocking if panel storage is unavailable.
       })
@@ -685,6 +821,10 @@ function App() {
 
     upsertPanel(panel).catch(() => {
       // Keep UI responsive even if IndexedDB write fails.
+    })
+
+    captureAndPersistPanelRaster(panel).catch(() => {
+      // Raster generation should never block panel creation.
     })
   }
 
@@ -720,6 +860,20 @@ function App() {
 
     deletePanelById(panelId).catch(() => {
       // Deletion failure should not block editing.
+    })
+
+    deletePanelRasterByPanelId(panelId).catch(() => {
+      // Raster cleanup failure should not block editing.
+    })
+
+    setPanelThumbnailUrls((previous) => {
+      const next = { ...previous }
+      const existingUrl = next[panelId]
+      if (existingUrl) {
+        URL.revokeObjectURL(existingUrl)
+      }
+      delete next[panelId]
+      return next
     })
   }
 
@@ -800,7 +954,16 @@ function App() {
             {panels.map((panel) => (
               <li key={panel.id} className={panel.id === activePanelId ? 'active' : ''}>
                 <button type="button" onClick={() => handleOpenPanel(panel)}>
-                  {panel.timestamp.toFixed(2)}s
+                  <span className="panel-thumb-wrap">
+                    {panelThumbnailUrls[panel.id] && (
+                      <img
+                        src={panelThumbnailUrls[panel.id]}
+                        alt={`Panel at ${panel.timestamp.toFixed(2)} seconds`}
+                        className="panel-thumb"
+                      />
+                    )}
+                  </span>
+                  <span>{panel.timestamp.toFixed(2)}s</span>
                 </button>
                 <button type="button" onClick={() => handleDeletePanel(panel.id)}>
                   Remove

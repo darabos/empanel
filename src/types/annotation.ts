@@ -65,3 +65,12 @@ export type PanelRecord = {
   createdAt: number
   updatedAt: number
 }
+
+export type PanelRasterRecord = {
+  panelId: string
+  width: number
+  height: number
+  mimeType: string
+  blob: Blob
+  updatedAt: number
+}
