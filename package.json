@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fontsource/grandstander": "^5.2.7",
+    "idb": "^8.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

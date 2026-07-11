@@ -11,6 +11,12 @@ import {
   saveCurrentVideoHandle,
 } from './lib/fileHandleStore'
 import {
+  clearAllPanels,
+  deletePanelById,
+  listPanelsByUpdatedAtDesc,
+  upsertPanel,
+} from './lib/panelStore'
+import {
   DEFAULT_TRANSFORM,
   STORAGE_KEY,
   getStateAtTime,
@@ -24,6 +30,7 @@ import type {
   TimelineSnapshot,
   VideoMetadata,
   ZoomPanState,
+  PanelRecord,
 } from './types/annotation'
 
 declare global {
@@ -52,6 +59,8 @@ function App() {
   const [showLoadVideoModal, setShowLoadVideoModal] = useState(false)
   const [isLoadingSavedVideo, setIsLoadingSavedVideo] = useState(false)
   const [savedVideoError, setSavedVideoError] = useState<string | null>(null)
+  const [panels, setPanels] = useState<PanelRecord[]>([])
+  const [activePanelId, setActivePanelId] = useState<string | null>(null)
 
   const transformRef = useRef<ZoomPanState>(transform)
   const bubblesRef = useRef<Bubble[]>(bubbles)
@@ -175,6 +184,45 @@ function App() {
     loadSavedHandle()
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPanels() {
+      try {
+        const results = await listPanelsByUpdatedAtDesc()
+        if (!cancelled) {
+          if (results.length === 0) {
+            const defaultPanel = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+            setPanels([defaultPanel])
+            setActivePanelId(defaultPanel.id)
+            applyPanelToEditor(defaultPanel)
+            upsertPanel(defaultPanel).catch(() => {
+              // Keep the editor usable even if default panel persistence fails.
+            })
+            return
+          }
+
+          setPanels(results)
+          setActivePanelId(results[0].id)
+          applyPanelToEditor(results[0])
+        }
+      } catch {
+        if (!cancelled) {
+          const fallbackPanel = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+          setPanels([fallbackPanel])
+          setActivePanelId(fallbackPanel.id)
+          applyPanelToEditor(fallbackPanel)
+        }
+      }
+    }
+
+    loadPanels()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   async function handleLoadSavedVideo() {
     if (!savedVideoHandle) {
       return
@@ -221,7 +269,67 @@ function App() {
     setCurrentTime(0)
   }
 
+  function createPanelId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `panel-${crypto.randomUUID()}`
+    }
+
+    return `panel-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  }
+
+  function createPanelRecord(
+    timestamp: number,
+    nextTransform: ZoomPanState,
+    nextBubbles: Bubble[],
+  ): PanelRecord {
+    const now = Date.now()
+    return {
+      id: createPanelId(),
+      timestamp,
+      transform: cloneTransform(nextTransform),
+      bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
+      createdAt: now,
+      updatedAt: now,
+    }
+  }
+
+  function applyPanelToEditor(panel: PanelRecord) {
+    setCurrentTime(panel.timestamp)
+    setTransform(cloneTransform(panel.transform))
+    setBubbles(panel.bubbles.map((bubble) => cloneBubble(bubble)))
+    setSelectedBubbleId(null)
+  }
+
+  function updateActivePanel(nextTimestamp: number, nextTransform: ZoomPanState, nextBubbles: Bubble[]) {
+    if (!activePanelId) {
+      return
+    }
+
+    setPanels((previous) => {
+      const existing = previous.find((panel) => panel.id === activePanelId)
+      if (!existing) {
+        return previous
+      }
+
+      const updated: PanelRecord = {
+        ...existing,
+        timestamp: nextTimestamp,
+        transform: cloneTransform(nextTransform),
+        bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
+        updatedAt: Date.now(),
+      }
+
+      upsertPanel(updated).catch(() => {
+        // Keep UI responsive even if IndexedDB write fails.
+      })
+
+      const withoutExisting = previous.filter((panel) => panel.id !== existing.id)
+      return [updated, ...withoutExisting].sort((a, b) => b.updatedAt - a.updatedAt)
+    })
+  }
+
   function commitSnapshot(nextTransform: ZoomPanState, nextBubbles: Bubble[]) {
+    updateActivePanel(currentTime, nextTransform, nextBubbles)
     setSnapshots((previous) =>
       upsertSnapshot(previous, currentTime, nextTransform, nextBubbles),
     )
@@ -229,10 +337,7 @@ function App() {
 
   function resolveTime(timestamp: number) {
     setCurrentTime(timestamp)
-    const resolved = getStateAtTime(snapshots, timestamp)
-    setTransform(resolved.transform)
-    setBubbles(resolved.bubbles)
-    setSelectedBubbleId(null)
+    updateActivePanel(timestamp, transformRef.current, bubblesRef.current)
   }
 
   function updateCurrentBubble(
@@ -544,13 +649,78 @@ function App() {
     setTransform(cloneTransform(DEFAULT_TRANSFORM))
     setBubbles([])
     setSelectedBubbleId(null)
+    const freshPanel = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+    setPanels([freshPanel])
+    setActivePanelId(freshPanel.id)
+    applyPanelToEditor(freshPanel)
     localStorage.removeItem(STORAGE_KEY)
+    clearAllPanels()
+      .then(() => upsertPanel(freshPanel))
+      .catch(() => {
+        // Keep clear action non-blocking if panel storage is unavailable.
+      })
   }
 
   function resetView() {
     const nextTransform = cloneTransform(DEFAULT_TRANSFORM)
     setTransform(nextTransform)
     commitSnapshot(nextTransform, bubbles)
+  }
+
+  function handleOpenPanel(panel: PanelRecord) {
+    setActivePanelId(panel.id)
+    applyPanelToEditor(panel)
+
+    if (videoRef.current) {
+      videoRef.current.currentTime = panel.timestamp
+    }
+  }
+
+  function handleCreateNewPanel() {
+    const panel = createPanelRecord(currentTime, transformRef.current, [])
+    setPanels((previous) => [panel, ...previous].sort((a, b) => b.updatedAt - a.updatedAt))
+    setActivePanelId(panel.id)
+    setBubbles([])
+    setSelectedBubbleId(null)
+
+    upsertPanel(panel).catch(() => {
+      // Keep UI responsive even if IndexedDB write fails.
+    })
+  }
+
+  function handleDeletePanel(panelId: string) {
+    setPanels((previous) => {
+      const remaining = previous.filter((panel) => panel.id !== panelId)
+      if (remaining.length > 0) {
+        if (activePanelId === panelId) {
+          const nextActive = remaining[0]
+          setActivePanelId(nextActive.id)
+          applyPanelToEditor(nextActive)
+          if (videoRef.current) {
+            videoRef.current.currentTime = nextActive.timestamp
+          }
+        }
+
+        return remaining
+      }
+
+      const fallback = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+      setActivePanelId(fallback.id)
+      applyPanelToEditor(fallback)
+      if (videoRef.current) {
+        videoRef.current.currentTime = fallback.timestamp
+      }
+
+      upsertPanel(fallback).catch(() => {
+        // Fallback persistence should not block UI.
+      })
+
+      return [fallback]
+    })
+
+    deletePanelById(panelId).catch(() => {
+      // Deletion failure should not block editing.
+    })
   }
 
   return (
@@ -614,6 +784,30 @@ function App() {
               onDeleteSelectedBubble={handleDeleteSelectedBubble}
             />
           </div>
+        )}
+      </section>
+
+      <section className="panel-library">
+        <div className="panel-library-header">
+          <h2>Panels</h2>
+          <button type="button" onClick={handleCreateNewPanel}>
+            New panel
+          </button>
+        </div>
+        {panels.length === 0 && <p>No panels yet.</p>}
+        {panels.length > 0 && (
+          <ul className="panel-list">
+            {panels.map((panel) => (
+              <li key={panel.id} className={panel.id === activePanelId ? 'active' : ''}>
+                <button type="button" onClick={() => handleOpenPanel(panel)}>
+                  {panel.timestamp.toFixed(2)}s
+                </button>
+                <button type="button" onClick={() => handleDeletePanel(panel.id)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

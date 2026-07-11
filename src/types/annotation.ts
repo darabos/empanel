@@ -56,3 +56,12 @@ export type VideoMetadata = {
   width: number
   height: number
 }
+
+export type PanelRecord = {
+  id: string
+  timestamp: number
+  transform: ZoomPanState
+  bubbles: Bubble[]
+  createdAt: number
+  updatedAt: number
+}
