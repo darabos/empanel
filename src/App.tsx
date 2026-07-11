@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { Sidebar } from './components/Sidebar'
-import { TopBar } from './components/TopBar'
 import { WorkspaceCanvas } from './components/WorkspaceCanvas'
 import { clamp, cloneBubble, cloneTransform, generateBubbleId } from './lib/annotationMath'
 import {
-  clearCurrentVideoHandle,
   getCurrentVideoHandle,
   type PersistedVideoHandle,
   saveCurrentVideoHandle,
 } from './lib/fileHandleStore'
 import {
-  clearAllPanels,
-  clearAllPanelRasters,
   deletePanelById,
   deletePanelRasterByPanelId,
   getPanelRasterByPanelId,
@@ -49,7 +45,6 @@ function App() {
   const viewportRef = useRef<HTMLDivElement | null>(null)
 
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [videoName, setVideoName] = useState('')
   const [videoMetadata, setVideoMetadata] = useState<VideoMetadata>({ width: 1280, height: 720 })
   const [currentTime, setCurrentTime] = useState(0)
 
@@ -349,7 +344,6 @@ function App() {
 
     const nextUrl = URL.createObjectURL(file)
     setVideoUrl(nextUrl)
-    setVideoName(file.name)
     setCurrentTime(0)
   }
 
@@ -751,31 +745,6 @@ function App() {
     }
   }, [bubbles, dragState, transform])
 
-  function clearAllAnnotations() {
-    setSnapshots([])
-    setTransform(cloneTransform(DEFAULT_TRANSFORM))
-    setBubbles([])
-    setSelectedBubbleId(null)
-    const freshPanel = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
-    setPanels([freshPanel])
-    setActivePanelId(freshPanel.id)
-    applyPanelToEditor(freshPanel)
-    setPanelThumbnailUrls((previous) => {
-      Object.values(previous).forEach((url) => {
-        URL.revokeObjectURL(url)
-      })
-      return {}
-    })
-    localStorage.removeItem(STORAGE_KEY)
-    clearAllPanels()
-      .then(() => clearAllPanelRasters())
-      .then(() => upsertPanel(freshPanel))
-      .then(() => captureAndPersistPanelRaster(freshPanel))
-      .catch(() => {
-        // Keep clear action non-blocking if panel storage is unavailable.
-      })
-  }
-
   function resetView() {
     const nextTransform = cloneTransform(DEFAULT_TRANSFORM)
     setTransform(nextTransform)
@@ -868,7 +837,6 @@ function App() {
               videoRef={videoRef}
               viewportRef={viewportRef}
               videoUrl={videoUrl}
-              videoName={videoName}
               currentTime={currentTime}
               transform={transform}
               bubbles={bubbles}

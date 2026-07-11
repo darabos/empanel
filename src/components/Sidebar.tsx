@@ -1,4 +1,3 @@
-import { clamp } from '../lib/annotationMath'
 import type { Bubble } from '../types/annotation'
 
 type SidebarProps = {

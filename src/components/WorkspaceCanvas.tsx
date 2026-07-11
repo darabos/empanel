@@ -5,7 +5,6 @@ type WorkspaceCanvasProps = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   viewportRef: React.RefObject<HTMLDivElement | null>
   videoUrl: string
-  videoName: string
   currentTime: number
   transform: ZoomPanState
   bubbles: Bubble[]
@@ -31,7 +30,6 @@ export function WorkspaceCanvas({
   videoRef,
   viewportRef,
   videoUrl,
-  videoName,
   currentTime,
   transform,
   bubbles,
