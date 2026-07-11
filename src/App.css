@@ -1,0 +1,264 @@
+.app-shell {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.topbar h1 {
+  margin: 0 0 6px;
+  font-size: 2rem;
+}
+
+.topbar p {
+  margin: 0;
+  color: #3b3139;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 1px solid #2d2d2d;
+  background: #f7f2dc;
+  color: #2d2d2d;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.45;
+}
+
+.dropzone {
+  border: 2px dashed #2d2d2d;
+  border-radius: 12px;
+  min-height: 620px;
+  background: linear-gradient(160deg, #f5edce 0%, #efe8ff 50%, #ddf7f5 100%);
+  padding: 16px;
+}
+
+.dropzone-message {
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 14px;
+}
+
+.canvas-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canvas-toolbar {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(45, 45, 45, 0.22);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 560px;
+  border: 1px solid rgba(45, 45, 45, 0.3);
+  border-radius: 12px;
+  background: #111;
+}
+
+.zoom-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.video-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.bubble-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tail-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tail-svg line {
+  stroke: #ffd22f;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.bubble-card {
+  position: absolute;
+  border: 2px solid #fce585;
+  border-radius: 14px;
+  background: rgba(34, 34, 34, 0.82);
+  color: #fff;
+  padding: 8px;
+  cursor: move;
+  pointer-events: auto;
+}
+
+.bubble-card span {
+  font-size: 0.9rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.bubble-card.selected {
+  border-color: #4bf0cd;
+}
+
+.resize-handle {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #0c0c0c;
+  background: #ffffff;
+}
+
+.tail-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  margin-top: -7px;
+  border-radius: 50%;
+  border: 1px solid #121212;
+  background: #ffd22f;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.tail-handle.selected {
+  background: #4bf0cd;
+}
+
+.pan-overlay {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  pointer-events: none;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.inspector {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(45, 45, 45, 0.22);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inspector h2 {
+  margin: 0;
+}
+
+.inspector-form {
+  display: grid;
+  gap: 8px;
+}
+
+.inspector-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.inspector-form input,
+.inspector-form textarea {
+  border: 1px solid rgba(45, 45, 45, 0.35);
+  border-radius: 6px;
+  padding: 7px;
+  font: inherit;
+}
+
+.inspector-form textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.storage-note {
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(45, 45, 45, 0.22);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.storage-note ul {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+
+@media (max-width: 1080px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .viewport {
+    min-height: 420px;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+}
