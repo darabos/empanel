@@ -96,6 +96,8 @@ button:disabled {
 
 .viewport.mode-pan {
   cursor: grab;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 .viewport.mode-pan:active {

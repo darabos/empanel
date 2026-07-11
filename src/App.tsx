@@ -35,6 +35,7 @@ function App() {
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null)
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [panModeEnabled, setPanModeEnabled] = useState(false)
+  const [viewportSize, setViewportSize] = useState({ width: 1, height: 1 })
 
   const transformRef = useRef<ZoomPanState>(transform)
   const bubblesRef = useRef<Bubble[]>(bubbles)
@@ -43,6 +44,18 @@ function App() {
     () => bubbles.find((bubble) => bubble.id === selectedBubbleId) ?? null,
     [bubbles, selectedBubbleId],
   )
+
+  const fitScale = useMemo(() => {
+    const widthScale = viewportSize.width / videoMetadata.width
+    const heightScale = viewportSize.height / videoMetadata.height
+    const value = Math.min(widthScale, heightScale)
+    return Number.isFinite(value) && value > 0 ? value : 1
+  }, [videoMetadata.height, videoMetadata.width, viewportSize.height, viewportSize.width])
+
+  const fittedWidth = videoMetadata.width * fitScale
+  const fittedHeight = videoMetadata.height * fitScale
+  const baseOffsetX = (viewportSize.width - fittedWidth) / 2
+  const baseOffsetY = (viewportSize.height - fittedHeight) / 2
 
   useEffect(() => {
     const restored = safeParsePersistedState(localStorage.getItem(STORAGE_KEY))
@@ -86,6 +99,28 @@ function App() {
     bubblesRef.current = bubbles
   }, [bubbles])
 
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) {
+      return
+    }
+
+    const updateViewportSize = () => {
+      setViewportSize({
+        width: Math.max(1, viewport.clientWidth),
+        height: Math.max(1, viewport.clientHeight),
+      })
+    }
+
+    updateViewportSize()
+    const observer = new ResizeObserver(updateViewportSize)
+    observer.observe(viewport)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [videoUrl])
+
   function commitSnapshot(nextTransform: ZoomPanState, nextBubbles: Bubble[]) {
     setSnapshots((previous) =>
       upsertSnapshot(previous, currentTime, nextTransform, nextBubbles),
@@ -128,8 +163,12 @@ function App() {
     const relativeX = clientX - viewportRect.left
     const relativeY = clientY - viewportRect.top
 
-    const frameX = (relativeX - transform.panX) / transform.zoom
-    const frameY = (relativeY - transform.panY) / transform.zoom
+    const effectiveScale = panModeEnabled ? fitScale * transform.zoom : fitScale
+    const effectivePanX = panModeEnabled ? transform.panX : 0
+    const effectivePanY = panModeEnabled ? transform.panY : 0
+
+    const frameX = (relativeX - baseOffsetX - effectivePanX) / effectiveScale
+    const frameY = (relativeY - baseOffsetY - effectivePanY) / effectiveScale
 
     return {
       x: clamp(frameX / videoMetadata.width, 0, 1),
@@ -148,13 +187,15 @@ function App() {
     const pointerY = event.clientY - viewportRect.top
     const factor = event.deltaY < 0 ? 1.08 : 0.92
     const nextZoom = clamp(transform.zoom * factor, 1, 5)
+    const currentScale = fitScale * transform.zoom
+    const nextScale = fitScale * nextZoom
 
-    const baseX = (pointerX - transform.panX) / transform.zoom
-    const baseY = (pointerY - transform.panY) / transform.zoom
+    const baseX = (pointerX - baseOffsetX - transform.panX) / currentScale
+    const baseY = (pointerY - baseOffsetY - transform.panY) / currentScale
     const nextTransform = {
       zoom: nextZoom,
-      panX: pointerX - baseX * nextZoom,
-      panY: pointerY - baseY * nextZoom,
+      panX: pointerX - baseOffsetX - baseX * nextScale,
+      panY: pointerY - baseOffsetY - baseY * nextScale,
     }
 
     setTransform(nextTransform)
@@ -398,6 +439,9 @@ function App() {
               bubbles={bubbles}
               selectedBubbleId={selectedBubbleId}
               videoMetadata={videoMetadata}
+              fitScale={fitScale}
+              baseOffsetX={baseOffsetX}
+              baseOffsetY={baseOffsetY}
               panModeEnabled={panModeEnabled}
               onPanModeChange={setPanModeEnabled}
               onWheel={handleWheel}

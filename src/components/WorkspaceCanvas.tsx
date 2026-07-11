@@ -11,6 +11,9 @@ type WorkspaceCanvasProps = {
   bubbles: Bubble[]
   selectedBubbleId: string | null
   videoMetadata: VideoMetadata
+  fitScale: number
+  baseOffsetX: number
+  baseOffsetY: number
   panModeEnabled: boolean
   onPanModeChange: (enabled: boolean) => void
   onWheel: (event: React.WheelEvent<HTMLDivElement>) => void
@@ -33,6 +36,9 @@ export function WorkspaceCanvas({
   bubbles,
   selectedBubbleId,
   videoMetadata,
+  fitScale,
+  baseOffsetX,
+  baseOffsetY,
   panModeEnabled,
   onPanModeChange,
   onWheel,
@@ -45,13 +51,22 @@ export function WorkspaceCanvas({
   onStartTailDrag,
 }: WorkspaceCanvasProps) {
   const zoomPercentage = Math.round(transform.zoom * 100)
+  const fittedWidth = videoMetadata.width * fitScale
+  const fittedHeight = videoMetadata.height * fitScale
   const zoomLayerStyle: React.CSSProperties = panModeEnabled
     ? {
-        width: `${videoMetadata.width}px`,
-        height: `${videoMetadata.height}px`,
+        width: `${fittedWidth}px`,
+        height: `${fittedHeight}px`,
+        left: `${baseOffsetX}px`,
+        top: `${baseOffsetY}px`,
         transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.zoom})`,
       }
-    : {}
+    : {
+        width: `${fittedWidth}px`,
+        height: `${fittedHeight}px`,
+        left: `${baseOffsetX}px`,
+        top: `${baseOffsetY}px`,
+      }
 
   return (
     <div className="canvas-column">
@@ -73,7 +88,14 @@ export function WorkspaceCanvas({
       <div
         className={`viewport ${panModeEnabled ? 'mode-pan' : 'mode-seek'}`}
         ref={viewportRef}
-        onWheel={onWheel}
+        onWheel={(event) => {
+          if (!panModeEnabled) {
+            return
+          }
+
+          event.preventDefault()
+          onWheel(event)
+        }}
         onPointerDown={onViewportPointerDown}
       >
         <div
