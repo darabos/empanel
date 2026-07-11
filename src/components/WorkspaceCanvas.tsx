@@ -45,6 +45,13 @@ export function WorkspaceCanvas({
   onStartTailDrag,
 }: WorkspaceCanvasProps) {
   const zoomPercentage = Math.round(transform.zoom * 100)
+  const zoomLayerStyle: React.CSSProperties = panModeEnabled
+    ? {
+        width: `${videoMetadata.width}px`,
+        height: `${videoMetadata.height}px`,
+        transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.zoom})`,
+      }
+    : {}
 
   return (
     <div className="canvas-column">
@@ -52,35 +59,32 @@ export function WorkspaceCanvas({
         <span>{videoName}</span>
         <span>Time: {currentTime.toFixed(2)}s</span>
         <span>Zoom: {zoomPercentage}%</span>
+        <span>Mode: {panModeEnabled ? 'Pan' : 'Seek'}</span>
         <label>
           <input
             type="checkbox"
             checked={panModeEnabled}
             onChange={(event) => onPanModeChange(event.target.checked)}
           />
-          Pan mode
+          Pan mode (off = Seek mode)
         </label>
       </div>
 
       <div
-        className="viewport"
+        className={`viewport ${panModeEnabled ? 'mode-pan' : 'mode-seek'}`}
         ref={viewportRef}
         onWheel={onWheel}
         onPointerDown={onViewportPointerDown}
       >
         <div
           className="zoom-layer"
-          style={{
-            width: `${videoMetadata.width}px`,
-            height: `${videoMetadata.height}px`,
-            transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.zoom})`,
-          }}
+          style={zoomLayerStyle}
         >
           <video
             ref={videoRef}
-            className="video-frame"
+            className={`video-frame ${panModeEnabled ? 'pan-disabled' : ''}`}
             src={videoUrl}
-            controls
+            controls={!panModeEnabled}
             onTimeUpdate={onTimelineSync}
             onSeeked={onTimelineSync}
             onLoadedMetadata={onLoadedMetadata}

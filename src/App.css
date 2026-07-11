@@ -94,6 +94,14 @@ button:disabled {
   background: #111;
 }
 
+.viewport.mode-pan {
+  cursor: grab;
+}
+
+.viewport.mode-pan:active {
+  cursor: grabbing;
+}
+
 .zoom-layer {
   position: absolute;
   left: 0;
@@ -106,6 +114,10 @@ button:disabled {
   width: 100%;
   height: 100%;
   background: #000;
+}
+
+.video-frame.pan-disabled {
+  pointer-events: none;
 }
 
 .bubble-layer {
