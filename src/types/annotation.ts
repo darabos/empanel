@@ -1,9 +1,3 @@
-export type ZoomPanState = {
-  zoom: number
-  panX: number
-  panY: number
-}
-
 export type Bubble = {
   id: string
   left: number
@@ -17,7 +11,6 @@ export type Bubble = {
 
 export type TimelineSnapshot = {
   timestamp: number
-  transform: ZoomPanState
   bubbles: Bubble[]
 }
 
@@ -27,12 +20,6 @@ export type PersistedState = {
 }
 
 export type DragState =
-  | {
-      mode: 'pan'
-      startClientX: number
-      startClientY: number
-      startTransform: ZoomPanState
-    }
   | {
       mode: 'move'
       bubbleId: string
@@ -60,7 +47,6 @@ export type VideoMetadata = {
 export type PanelRecord = {
   id: string
   timestamp: number
-  transform: ZoomPanState
   bubbles: Bubble[]
   createdAt: number
   updatedAt: number

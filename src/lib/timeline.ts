@@ -1,14 +1,8 @@
-import { clamp, cloneBubbles, cloneTransform } from './annotationMath'
-import type { Bubble, PersistedState, TimelineSnapshot, ZoomPanState } from '../types/annotation'
+import { clamp, cloneBubbles } from './annotationMath'
+import type { Bubble, PersistedState, TimelineSnapshot } from '../types/annotation'
 
 export const STORAGE_KEY = 'video-annotator.timeline.v1'
 export const TIMESTAMP_EPSILON = 0.05
-
-export const DEFAULT_TRANSFORM: ZoomPanState = {
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-}
 
 export function sortSnapshots(snapshots: TimelineSnapshot[]): TimelineSnapshot[] {
   return [...snapshots].sort((a, b) => a.timestamp - b.timestamp)
@@ -17,7 +11,6 @@ export function sortSnapshots(snapshots: TimelineSnapshot[]): TimelineSnapshot[]
 export function getStateAtTime(snapshots: TimelineSnapshot[], timestamp: number) {
   if (snapshots.length === 0) {
     return {
-      transform: cloneTransform(DEFAULT_TRANSFORM),
       bubbles: [] as Bubble[],
     }
   }
@@ -32,7 +25,6 @@ export function getStateAtTime(snapshots: TimelineSnapshot[], timestamp: number)
   }
 
   return {
-    transform: cloneTransform(selected.transform),
     bubbles: cloneBubbles(selected.bubbles),
   }
 }
@@ -40,12 +32,10 @@ export function getStateAtTime(snapshots: TimelineSnapshot[], timestamp: number)
 export function upsertSnapshot(
   snapshots: TimelineSnapshot[],
   timestamp: number,
-  transform: ZoomPanState,
   bubbles: Bubble[],
 ) {
   const nextSnapshot: TimelineSnapshot = {
     timestamp,
-    transform: cloneTransform(transform),
     bubbles: cloneBubbles(bubbles),
   }
 
@@ -78,19 +68,11 @@ export function safeParsePersistedState(rawValue: string | null): PersistedState
       .filter((snapshot) => {
         return (
           typeof snapshot.timestamp === 'number' &&
-          typeof snapshot.transform?.zoom === 'number' &&
-          typeof snapshot.transform?.panX === 'number' &&
-          typeof snapshot.transform?.panY === 'number' &&
           Array.isArray(snapshot.bubbles)
         )
       })
       .map((snapshot) => ({
         timestamp: snapshot.timestamp,
-        transform: {
-          zoom: clamp(snapshot.transform.zoom, 0.5, 5),
-          panX: snapshot.transform.panX,
-          panY: snapshot.transform.panY,
-        },
         bubbles: snapshot.bubbles
           .filter((bubble) => {
             return (

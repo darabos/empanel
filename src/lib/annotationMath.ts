@@ -1,15 +1,7 @@
-import type { Bubble, ZoomPanState } from '../types/annotation'
+import type { Bubble } from '../types/annotation'
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
-}
-
-export function cloneTransform(transform: ZoomPanState): ZoomPanState {
-  return {
-    zoom: transform.zoom,
-    panX: transform.panX,
-    panY: transform.panY,
-  }
 }
 
 export function cloneBubble(bubble: Bubble): Bubble {

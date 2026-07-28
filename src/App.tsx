@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { Sidebar } from './components/Sidebar'
 import { WorkspaceCanvas } from './components/WorkspaceCanvas'
-import { clamp, cloneBubble, cloneTransform, generateBubbleId } from './lib/annotationMath'
+import { clamp, cloneBubble, generateBubbleId } from './lib/annotationMath'
 import {
   getCurrentVideoHandle,
   type PersistedVideoHandle,
@@ -18,7 +18,6 @@ import {
 } from './lib/panelStore'
 import { renderPanelRasterBlob } from './lib/panelRaster'
 import {
-  DEFAULT_TRANSFORM,
   STORAGE_KEY,
   getStateAtTime,
   safeParsePersistedState,
@@ -30,7 +29,6 @@ import type {
   PersistedState,
   TimelineSnapshot,
   VideoMetadata,
-  ZoomPanState,
   PanelRecord,
 } from './types/annotation'
 
@@ -48,12 +46,11 @@ function App() {
   const [videoMetadata, setVideoMetadata] = useState<VideoMetadata>({ width: 1280, height: 720 })
   const [currentTime, setCurrentTime] = useState(0)
 
-  const [snapshots, setSnapshots] = useState<TimelineSnapshot[]>([])
-  const [transform, setTransform] = useState<ZoomPanState>(cloneTransform(DEFAULT_TRANSFORM))
+  const [snapshots, setSnapshots] = useState<TimelineSnapshot[]>([]
+  )
   const [bubbles, setBubbles] = useState<Bubble[]>([])
   const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null)
   const [dragState, setDragState] = useState<DragState | null>(null)
-  const [panModeEnabled, setPanModeEnabled] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 1, height: 1 })
   const [savedVideoHandle, setSavedVideoHandle] = useState<PersistedVideoHandle | null>(null)
   const [showLoadVideoModal, setShowLoadVideoModal] = useState(false)
@@ -63,7 +60,6 @@ function App() {
   const [activePanelId, setActivePanelId] = useState<string | null>(null)
   const [panelThumbnailUrls, setPanelThumbnailUrls] = useState<Record<string, string>>({})
 
-  const transformRef = useRef<ZoomPanState>(transform)
   const bubblesRef = useRef<Bubble[]>(bubbles)
   const panelThumbnailUrlsRef = useRef<Record<string, string>>({})
 
@@ -92,7 +88,6 @@ function App() {
 
     setSnapshots(restored.snapshots)
     const initialState = getStateAtTime(restored.snapshots, 0)
-    setTransform(initialState.transform)
     setBubbles(initialState.bubbles)
   }, [])
 
@@ -117,10 +112,6 @@ function App() {
       }
     }
   }, [videoUrl])
-
-  useEffect(() => {
-    transformRef.current = transform
-  }, [transform])
 
   useEffect(() => {
     bubblesRef.current = bubbles
@@ -207,7 +198,7 @@ function App() {
         const results = await listPanelsByUpdatedAtDesc()
         if (!cancelled) {
           if (results.length === 0) {
-            const defaultPanel = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+            const defaultPanel = createPanelRecord(0, [])
             setPanels([defaultPanel])
             setActivePanelId(defaultPanel.id)
             applyPanelToEditor(defaultPanel)
@@ -223,7 +214,7 @@ function App() {
         }
       } catch {
         if (!cancelled) {
-          const fallbackPanel = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+          const fallbackPanel = createPanelRecord(0, [])
           setPanels([fallbackPanel])
           setActivePanelId(fallbackPanel.id)
           applyPanelToEditor(fallbackPanel)
@@ -398,14 +389,12 @@ function App() {
 
   function createPanelRecord(
     timestamp: number,
-    nextTransform: ZoomPanState,
     nextBubbles: Bubble[],
   ): PanelRecord {
     const now = Date.now()
     return {
       id: createPanelId(),
       timestamp,
-      transform: cloneTransform(nextTransform),
       bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
       createdAt: now,
       updatedAt: now,
@@ -414,12 +403,11 @@ function App() {
 
   function applyPanelToEditor(panel: PanelRecord) {
     setCurrentTime(panel.timestamp)
-    setTransform(cloneTransform(panel.transform))
     setBubbles(panel.bubbles.map((bubble) => cloneBubble(bubble)))
     setSelectedBubbleId(null)
   }
 
-  function updateActivePanel(nextTimestamp: number, nextTransform: ZoomPanState, nextBubbles: Bubble[]) {
+  function updateActivePanel(nextTimestamp: number, nextBubbles: Bubble[]) {
     if (!activePanelId) {
       return
     }
@@ -433,7 +421,6 @@ function App() {
       const updated: PanelRecord = {
         ...existing,
         timestamp: nextTimestamp,
-        transform: cloneTransform(nextTransform),
         bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
         updatedAt: Date.now(),
       }
@@ -451,16 +438,16 @@ function App() {
     })
   }
 
-  function commitSnapshot(nextTransform: ZoomPanState, nextBubbles: Bubble[]) {
-    updateActivePanel(currentTime, nextTransform, nextBubbles)
+  function commitSnapshot(nextBubbles: Bubble[]) {
+    updateActivePanel(currentTime, nextBubbles)
     setSnapshots((previous) =>
-      upsertSnapshot(previous, currentTime, nextTransform, nextBubbles),
+      upsertSnapshot(previous, currentTime, nextBubbles),
     )
   }
 
   function resolveTime(timestamp: number) {
     setCurrentTime(timestamp)
-    updateActivePanel(timestamp, transformRef.current, bubblesRef.current)
+    updateActivePanel(timestamp, bubblesRef.current)
   }
 
   function updateCurrentBubble(
@@ -474,7 +461,7 @@ function App() {
       )
 
       if (shouldCommit) {
-        commitSnapshot(transform, next)
+        commitSnapshot(next)
       }
 
       return next
@@ -491,42 +478,13 @@ function App() {
     const relativeX = clientX - viewportRect.left
     const relativeY = clientY - viewportRect.top
 
-    const effectiveScale = panModeEnabled ? fitScale * transform.zoom : fitScale
-    const effectivePanX = panModeEnabled ? transform.panX : 0
-    const effectivePanY = panModeEnabled ? transform.panY : 0
-
-    const frameX = (relativeX - baseOffsetX - effectivePanX) / effectiveScale
-    const frameY = (relativeY - baseOffsetY - effectivePanY) / effectiveScale
+    const frameX = (relativeX - baseOffsetX) / fitScale
+    const frameY = (relativeY - baseOffsetY) / fitScale
 
     return {
       x: clamp(frameX / videoMetadata.width, 0, 1),
       y: clamp(frameY / videoMetadata.height, 0, 1),
     }
-  }
-
-  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
-    if (!viewportRef.current) {
-      return
-    }
-
-    const viewportRect = viewportRef.current.getBoundingClientRect()
-    const pointerX = event.clientX - viewportRect.left
-    const pointerY = event.clientY - viewportRect.top
-    const factor = event.deltaY < 0 ? 1.08 : 0.92
-    const nextZoom = clamp(transform.zoom * factor, 1, 5)
-    const currentScale = fitScale * transform.zoom
-    const nextScale = fitScale * nextZoom
-
-    const baseX = (pointerX - baseOffsetX - transform.panX) / currentScale
-    const baseY = (pointerY - baseOffsetY - transform.panY) / currentScale
-    const nextTransform = {
-      zoom: nextZoom,
-      panX: pointerX - baseOffsetX - baseX * nextScale,
-      panY: pointerY - baseOffsetY - baseY * nextScale,
-    }
-
-    setTransform(nextTransform)
-    commitSnapshot(nextTransform, bubbles)
   }
 
   async function handleOpenVideo() {
@@ -597,7 +555,7 @@ function App() {
     const next = [...bubbles, bubble]
     setBubbles(next)
     setSelectedBubbleId(bubble.id)
-    commitSnapshot(transform, next)
+    commitSnapshot(next)
   }
 
   function handleDeleteSelectedBubble() {
@@ -608,20 +566,7 @@ function App() {
     const next = bubbles.filter((bubble) => bubble.id !== selectedBubbleId)
     setBubbles(next)
     setSelectedBubbleId(null)
-    commitSnapshot(transform, next)
-  }
-
-  function handlePointerDownPan(event: React.PointerEvent<HTMLDivElement>) {
-    if (!panModeEnabled || event.button !== 0) {
-      return
-    }
-
-    setDragState({
-      mode: 'pan',
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startTransform: cloneTransform(transform),
-    })
+    commitSnapshot(next)
   }
 
   function startMoveBubble(event: React.PointerEvent<HTMLDivElement>, bubble: Bubble) {
@@ -666,17 +611,6 @@ function App() {
     const activeDragState = dragState
 
     function handlePointerMove(event: PointerEvent) {
-      if (activeDragState.mode === 'pan') {
-        const deltaX = event.clientX - activeDragState.startClientX
-        const deltaY = event.clientY - activeDragState.startClientY
-        setTransform({
-          zoom: activeDragState.startTransform.zoom,
-          panX: activeDragState.startTransform.panX + deltaX,
-          panY: activeDragState.startTransform.panY + deltaY,
-        })
-        return
-      }
-
       if (activeDragState.mode === 'tail') {
         const point = pointerToFrameCoordinates(event.clientX, event.clientY)
         updateCurrentBubble(
@@ -732,7 +666,7 @@ function App() {
     }
 
     function handlePointerUp() {
-      commitSnapshot(transformRef.current, bubblesRef.current)
+      commitSnapshot(bubblesRef.current)
       setDragState(null)
     }
 
@@ -743,13 +677,7 @@ function App() {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
     }
-  }, [bubbles, dragState, transform])
-
-  function resetView() {
-    const nextTransform = cloneTransform(DEFAULT_TRANSFORM)
-    setTransform(nextTransform)
-    commitSnapshot(nextTransform, bubbles)
-  }
+  }, [bubbles, dragState])
 
   function handleOpenPanel(panel: PanelRecord) {
     setActivePanelId(panel.id)
@@ -761,7 +689,7 @@ function App() {
   }
 
   function handleCreateNewPanel() {
-    const panel = createPanelRecord(currentTime, transformRef.current, [])
+    const panel = createPanelRecord(currentTime, [])
     setPanels((previous) => [panel, ...previous].sort((a, b) => b.updatedAt - a.updatedAt))
     setActivePanelId(panel.id)
     setBubbles([])
@@ -792,7 +720,7 @@ function App() {
         return remaining
       }
 
-      const fallback = createPanelRecord(0, cloneTransform(DEFAULT_TRANSFORM), [])
+      const fallback = createPanelRecord(0, [])
       setActivePanelId(fallback.id)
       applyPanelToEditor(fallback)
       if (videoRef.current) {
@@ -838,17 +766,12 @@ function App() {
               viewportRef={viewportRef}
               videoUrl={videoUrl}
               currentTime={currentTime}
-              transform={transform}
               bubbles={bubbles}
               selectedBubbleId={selectedBubbleId}
               videoMetadata={videoMetadata}
               fitScale={fitScale}
               baseOffsetX={baseOffsetX}
               baseOffsetY={baseOffsetY}
-              panModeEnabled={panModeEnabled}
-              onPanModeChange={setPanModeEnabled}
-              onWheel={handleWheel}
-              onViewportPointerDown={handlePointerDownPan}
               onTimelineSync={handleTimelineSync}
               onLoadedMetadata={(event) => {
                 const node = event.currentTarget
@@ -869,7 +792,6 @@ function App() {
               onDeleteSelectedBubble={handleDeleteSelectedBubble}
               onOpenVideo={handleOpenVideo}
               onAddBubble={handleAddBubble}
-              onResetView={resetView}
             />
           </div>
         )}

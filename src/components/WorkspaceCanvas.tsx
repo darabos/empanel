@@ -1,22 +1,17 @@
 import type React from 'react'
-import type { Bubble, VideoMetadata, ZoomPanState } from '../types/annotation'
+import type { Bubble, VideoMetadata } from '../types/annotation'
 
 type WorkspaceCanvasProps = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   viewportRef: React.RefObject<HTMLDivElement | null>
   videoUrl: string
   currentTime: number
-  transform: ZoomPanState
   bubbles: Bubble[]
   selectedBubbleId: string | null
   videoMetadata: VideoMetadata
   fitScale: number
   baseOffsetX: number
   baseOffsetY: number
-  panModeEnabled: boolean
-  onPanModeChange: (enabled: boolean) => void
-  onWheel: (event: React.WheelEvent<HTMLDivElement>) => void
-  onViewportPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void
   onTimelineSync: () => void
   onLoadedMetadata: (event: React.SyntheticEvent<HTMLVideoElement>) => void
   onSelectBubble: (bubbleId: string) => void
@@ -31,17 +26,12 @@ export function WorkspaceCanvas({
   viewportRef,
   videoUrl,
   currentTime,
-  transform,
   bubbles,
   selectedBubbleId,
   videoMetadata,
   fitScale,
   baseOffsetX,
   baseOffsetY,
-  panModeEnabled,
-  onPanModeChange,
-  onWheel,
-  onViewportPointerDown,
   onTimelineSync,
   onLoadedMetadata,
   onSelectBubble,
@@ -50,50 +40,24 @@ export function WorkspaceCanvas({
   onStartResizeBubble,
   onStartTailDrag,
 }: WorkspaceCanvasProps) {
-  const zoomPercentage = Math.round(transform.zoom * 100)
   const fittedWidth = videoMetadata.width * fitScale
   const fittedHeight = videoMetadata.height * fitScale
-  const zoomLayerStyle: React.CSSProperties = panModeEnabled
-    ? {
-        width: `${fittedWidth}px`,
-        height: `${fittedHeight}px`,
-        left: `${baseOffsetX}px`,
-        top: `${baseOffsetY}px`,
-        transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.zoom})`,
-      }
-    : {
-        width: `${fittedWidth}px`,
-        height: `${fittedHeight}px`,
-        left: `${baseOffsetX}px`,
-        top: `${baseOffsetY}px`,
-      }
+  const layerStyle: React.CSSProperties = {
+    width: `${fittedWidth}px`,
+    height: `${fittedHeight}px`,
+    left: `${baseOffsetX}px`,
+    top: `${baseOffsetY}px`,
+  }
 
   return (
     <div className="canvas-column">
       <div className="canvas-toolbar">
         <span>Time: {currentTime.toFixed(2)}s</span>
-        <span>Zoom: {zoomPercentage}%</span>
-        <span>Mode: {panModeEnabled ? 'Pan' : 'Seek'}</span>
-        <label>
-          <input
-            type="checkbox"
-            checked={panModeEnabled}
-            onChange={(event) => onPanModeChange(event.target.checked)}
-          />
-          Pan mode
-        </label>
       </div>
 
       <div
-        className={`viewport ${panModeEnabled ? 'mode-pan' : 'mode-seek'}`}
+        className="viewport"
         ref={viewportRef}
-        onWheel={(event) => {
-          if (!panModeEnabled) {
-            return
-          }
-
-          onWheel(event)
-        }}
         onPointerDown={(event) => {
           const target = event.target as HTMLElement
           const clickedOnBubble = Boolean(
@@ -105,19 +69,17 @@ export function WorkspaceCanvas({
           if (!clickedOnBubble) {
             onDeselectBubble()
           }
-
-          onViewportPointerDown(event)
         }}
       >
         <div
           className="zoom-layer"
-          style={zoomLayerStyle}
+          style={layerStyle}
         >
           <video
             ref={videoRef}
-            className={`video-frame ${panModeEnabled ? 'pan-disabled' : ''}`}
+            className="video-frame"
             src={videoUrl}
-            controls={!panModeEnabled}
+            controls
             onTimeUpdate={onTimelineSync}
             onSeeked={onTimelineSync}
             onLoadedMetadata={onLoadedMetadata}

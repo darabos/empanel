@@ -6,7 +6,6 @@ type SidebarProps = {
   onDeleteSelectedBubble: () => void
   onOpenVideo: () => void
   onAddBubble: () => void
-  onResetView: () => void
 }
 
 export function Sidebar({
@@ -15,7 +14,6 @@ export function Sidebar({
   onDeleteSelectedBubble,
   onOpenVideo,
   onAddBubble,
-  onResetView,
 }: SidebarProps) {
   return (
     <aside className="inspector">
@@ -24,9 +22,6 @@ export function Sidebar({
       </button>
       <button type="button" onClick={onAddBubble}>
         Add Bubble
-      </button>
-      <button type="button" onClick={onResetView}>
-        Reset View
       </button>
       {selectedBubble && (
         <div className="inspector-form">
