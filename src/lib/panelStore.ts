@@ -11,37 +11,28 @@ type PanelDb = DBSchema & {
     key: string
     value: PanelRecord
     indexes: {
-      'by-updatedAt': number
       'by-timestamp': number
     }
   }
   panelRasters: {
     key: string
     value: PanelRasterRecord
-    indexes: {
-      'by-updatedAt': number
-    }
   }
 }
 
 const panelDbPromise = openDB<PanelDb>(DB_NAME, DB_VERSION, {
   upgrade(database) {
     const panels = database.createObjectStore(PANEL_STORE, { keyPath: 'id' })
-    panels.createIndex('by-updatedAt', 'updatedAt')
     panels.createIndex('by-timestamp', 'timestamp')
 
-    const panelRasters = database.createObjectStore(PANEL_RASTER_STORE, { keyPath: 'panelId' })
-    panelRasters.createIndex('by-updatedAt', 'updatedAt')
+    database.createObjectStore(PANEL_RASTER_STORE, { keyPath: 'panelId' })
   },
 })
 
-export async function listPanelsByUpdatedAtDesc() {
+export async function listPanelsByCreatedAtAsc() {
   const db = await panelDbPromise
-  const tx = db.transaction(PANEL_STORE, 'readonly')
-  const index = tx.store.index('by-updatedAt')
-  const results = await index.getAll()
-  await tx.done
-  return results.sort((a, b) => b.updatedAt - a.updatedAt)
+  const results = await db.getAll(PANEL_STORE)
+  return results.sort((a, b) => a.createdAt - b.createdAt)
 }
 
 export async function getPanelById(id: string) {

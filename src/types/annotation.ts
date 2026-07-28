@@ -49,7 +49,6 @@ export type PanelRecord = {
   timestamp: number
   bubbles: Bubble[]
   createdAt: number
-  updatedAt: number
 }
 
 export type PanelRasterRecord = {
@@ -58,5 +57,4 @@ export type PanelRasterRecord = {
   height: number
   mimeType: string
   blob: Blob
-  updatedAt: number
 }

@@ -12,7 +12,7 @@ import {
   deletePanelById,
   deletePanelRasterByPanelId,
   getPanelRasterByPanelId,
-  listPanelsByUpdatedAtDesc,
+  listPanelsByCreatedAtAsc,
   upsertPanelRaster,
   upsertPanel,
 } from './lib/panelStore'
@@ -226,7 +226,7 @@ function App() {
 
     async function loadPanels() {
       try {
-        const results = await listPanelsByUpdatedAtDesc()
+        const results = await listPanelsByCreatedAtAsc()
         if (!cancelled) {
           if (results.length === 0) {
             const defaultPanel = createPanelRecord(0, [])
@@ -393,7 +393,6 @@ function App() {
       height: videoMetadata.height,
       mimeType: rasterBlob.type || 'image/webp',
       blob: rasterBlob,
-      updatedAt: Date.now(),
     })
 
     const nextUrl = URL.createObjectURL(rasterBlob)
@@ -428,7 +427,6 @@ function App() {
       timestamp,
       bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
       createdAt: now,
-      updatedAt: now,
     }
   }
 
@@ -453,7 +451,6 @@ function App() {
         ...existing,
         timestamp: nextTimestamp,
         bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
-        updatedAt: Date.now(),
       }
 
       upsertPanel(updated).catch(() => {
@@ -465,7 +462,7 @@ function App() {
       })
 
       const withoutExisting = previous.filter((panel) => panel.id !== existing.id)
-      return [updated, ...withoutExisting].sort((a, b) => b.updatedAt - a.updatedAt)
+      return [...withoutExisting, updated].sort((a, b) => a.createdAt - b.createdAt)
     })
   }
 
@@ -721,7 +718,7 @@ function App() {
 
   function handleCreateNewPanel() {
     const panel = createPanelRecord(currentTime, [])
-    setPanels((previous) => [panel, ...previous].sort((a, b) => b.updatedAt - a.updatedAt))
+    setPanels((previous) => [...previous, panel].sort((a, b) => a.createdAt - b.createdAt))
     setActivePanelId(panel.id)
     setBubbles([])
     setSelectedBubbleId(null)
