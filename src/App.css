@@ -90,6 +90,17 @@ button:disabled {
   background: #000;
 }
 
+.raster-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .bubble-layer {
   position: absolute;
   left: 0;
@@ -113,25 +124,16 @@ button:disabled {
 
 .bubble-card {
   position: absolute;
-  border: 2px solid #fff;
-  border-radius: 100px;
-  background: #fff;
-  color: #111;
-  padding: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
   cursor: move;
   pointer-events: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
 }
 
-.bubble-card span {
-  font-family: 'Grandstander', 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
-  font-size: 24px;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-  width: 100%;
+.bubble-card.selected {
+  outline: 2px dashed rgba(75, 240, 205, 0.85);
+  border-radius: 14px;
 }
 
 .resize-handle {

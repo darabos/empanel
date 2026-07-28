@@ -5,6 +5,7 @@ type WorkspaceCanvasProps = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   viewportRef: React.RefObject<HTMLDivElement | null>
   videoUrl: string
+  panelRasterUrl: string | null
   currentTime: number
   bubbles: Bubble[]
   selectedBubbleId: string | null
@@ -25,6 +26,7 @@ export function WorkspaceCanvas({
   videoRef,
   viewportRef,
   videoUrl,
+  panelRasterUrl,
   currentTime,
   bubbles,
   selectedBubbleId,
@@ -85,35 +87,22 @@ export function WorkspaceCanvas({
             onLoadedMetadata={onLoadedMetadata}
           />
 
+          {panelRasterUrl && (
+            <img
+              src={panelRasterUrl}
+              alt=""
+              className="raster-overlay"
+            />
+          )}
+
           <div className="bubble-layer">
             {bubbles.map((bubble) => {
               const isSelected = bubble.id === selectedBubbleId
               const width = bubble.right - bubble.left
               const height = bubble.bottom - bubble.top
-              const centerX = bubble.left + width / 2
-              const centerY = bubble.top + height / 2
-              const baseX = centerX * 100
-              const baseY = centerY * 100
-              const tipX = bubble.tailX * 100
-              const tipY = bubble.tailY * 100
-              const vectorX = tipX - baseX
-              const vectorY = tipY - baseY
-              const vectorLength = Math.hypot(vectorX, vectorY) || 1
-              const perpX = -vectorY / vectorLength
-              const perpY = vectorX / vectorLength
-              const tailHalfWidth = 3
-              const base1X = baseX + perpX * tailHalfWidth
-              const base1Y = baseY + perpY * tailHalfWidth
-              const base2X = baseX - perpX * tailHalfWidth
-              const base2Y = baseY - perpY * tailHalfWidth
 
               return (
                 <div key={bubble.id}>
-                  <svg className="tail-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <polygon
-                      points={`${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`}
-                    />
-                  </svg>
 
                   <div
                     className={`bubble-card ${isSelected ? 'selected' : ''}`}
@@ -126,7 +115,6 @@ export function WorkspaceCanvas({
                     onPointerDown={(event) => onStartMoveBubble(event, bubble)}
                     onClick={() => onSelectBubble(bubble.id)}
                   >
-                    <span>{bubble.text || '...'}</span>
                     {isSelected && (
                       <button
                         type="button"

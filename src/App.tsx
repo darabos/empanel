@@ -765,6 +765,7 @@ function App() {
               videoRef={videoRef}
               viewportRef={viewportRef}
               videoUrl={videoUrl}
+              panelRasterUrl={activePanelId ? (panelThumbnailUrls[activePanelId] ?? null) : null}
               currentTime={currentTime}
               bubbles={bubbles}
               selectedBubbleId={selectedBubbleId}
