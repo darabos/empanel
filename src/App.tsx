@@ -131,9 +131,14 @@ function App() {
       console.log('[currentTime effect] Video element not available yet')
       return
     }
-    console.log('[currentTime effect] Video element found. Attempting to set currentTime. Video readyState:', video.readyState)
-    video.currentTime = currentTime
-    console.log('[currentTime effect] Set video.currentTime to:', currentTime, 'Video.currentTime now:', video.currentTime)
+
+    // Only seek if the video is paused (avoid interfering with playback)
+    if (video.paused) {
+      console.log('[currentTime effect] Video is paused. Seeking to:', currentTime)
+      video.currentTime = currentTime
+    } else {
+      console.log('[currentTime effect] Video is playing. Skipping seek.')
+    }
   }, [currentTime])
 
   useEffect(() => {
@@ -840,7 +845,7 @@ function App() {
                 console.log('[onLoadedMetadata] Video metadata loaded. Width:', width, 'Height:', height)
                 console.log('[onLoadedMetadata] Video readyState:', node.readyState, 'Video currentTime:', node.currentTime, 'Expected currentTime (state):', currentTime)
                 console.log('[onLoadedMetadata] pendingSeekTimeRef:', pendingSeekTimeRef.current)
-                
+
                 // Apply pending seek if we have one
                 if (pendingSeekTimeRef.current !== null) {
                   const targetTime = pendingSeekTimeRef.current
@@ -848,7 +853,7 @@ function App() {
                   node.currentTime = targetTime
                   pendingSeekTimeRef.current = null
                 }
-                
+
                 setVideoMetadata({ width, height })
               }}
               onSelectBubble={setSelectedBubbleId}
