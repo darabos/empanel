@@ -622,6 +622,20 @@ function App() {
     commitSnapshot(next)
   }
 
+  function handlePreviousFrame() {
+    // Step back by 1 frame (1/30th second for 30fps video)
+    const frameStep = 1 / 30
+    const newTime = Math.max(0, currentTime - frameStep)
+    setCurrentTime(newTime)
+  }
+
+  function handleNextFrame() {
+    // Step forward by 1 frame (1/30th second for 30fps video)
+    const frameStep = 1 / 30
+    const newTime = currentTime + frameStep
+    setCurrentTime(newTime)
+  }
+
   function handleDeleteSelectedBubble() {
     if (!selectedBubbleId) {
       return
@@ -861,6 +875,8 @@ function App() {
               onStartMoveBubble={startMoveBubble}
               onStartResizeBubble={startResizeBubble}
               onStartTailDrag={startTailDrag}
+              onPreviousFrame={handlePreviousFrame}
+              onNextFrame={handleNextFrame}
             />
 
             <Sidebar

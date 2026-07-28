@@ -20,6 +20,8 @@ type WorkspaceCanvasProps = {
   onStartMoveBubble: (event: React.PointerEvent<HTMLDivElement>, bubble: Bubble) => void
   onStartResizeBubble: (event: React.PointerEvent<HTMLButtonElement>, bubble: Bubble) => void
   onStartTailDrag: (event: React.PointerEvent<HTMLButtonElement>, bubble: Bubble) => void
+  onPreviousFrame: () => void
+  onNextFrame: () => void
 }
 
 export function WorkspaceCanvas({
@@ -41,6 +43,8 @@ export function WorkspaceCanvas({
   onStartMoveBubble,
   onStartResizeBubble,
   onStartTailDrag,
+  onPreviousFrame,
+  onNextFrame,
 }: WorkspaceCanvasProps) {
   const fittedWidth = videoMetadata.width * fitScale
   const fittedHeight = videoMetadata.height * fitScale
@@ -54,7 +58,13 @@ export function WorkspaceCanvas({
   return (
     <div className="canvas-column">
       <div className="canvas-toolbar">
+        <button onClick={onPreviousFrame} title="Previous frame (Left arrow)">
+          ← Frame
+        </button>
         <span>Time: {currentTime.toFixed(2)}s</span>
+        <button onClick={onNextFrame} title="Next frame (Right arrow)">
+          Frame →
+        </button>
       </div>
 
       <div
