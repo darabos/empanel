@@ -41,6 +41,7 @@ declare global {
 function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
+  const pendingSeekTimeRef = useRef<number | null>(null)
 
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoMetadata, setVideoMetadata] = useState<VideoMetadata>({ width: 1280, height: 720 })
@@ -108,8 +109,12 @@ function App() {
   }, [snapshots])
 
   useEffect(() => {
+    if (videoUrl) {
+      console.log('[videoUrl effect] Video URL changed, attempting to load video')
+    }
     return () => {
       if (videoUrl) {
+        console.log('[videoUrl cleanup] Cleaning up video URL')
         URL.revokeObjectURL(videoUrl)
       }
     }
@@ -118,6 +123,18 @@ function App() {
   useEffect(() => {
     bubblesRef.current = bubbles
   }, [bubbles])
+
+  useEffect(() => {
+    console.log('[currentTime effect] currentTime state changed to:', currentTime)
+    const video = videoRef.current
+    if (!video) {
+      console.log('[currentTime effect] Video element not available yet')
+      return
+    }
+    console.log('[currentTime effect] Video element found. Attempting to set currentTime. Video readyState:', video.readyState)
+    video.currentTime = currentTime
+    console.log('[currentTime effect] Set video.currentTime to:', currentTime, 'Video.currentTime now:', video.currentTime)
+  }, [currentTime])
 
   useEffect(() => {
     panelThumbnailUrlsRef.current = panelThumbnailUrls
@@ -225,10 +242,13 @@ function App() {
     let cancelled = false
 
     async function loadPanels() {
+      console.log('[loadPanels] Starting to load panels from IndexedDB')
       try {
         const results = await listPanelsByCreatedAtAsc()
+        console.log('[loadPanels] Loaded panels:', results)
         if (!cancelled) {
           if (results.length === 0) {
+            console.log('[loadPanels] No panels found, creating default')
             const defaultPanel = createPanelRecord(0, [])
             setPanels([defaultPanel])
             setActivePanelId(defaultPanel.id)
@@ -239,11 +259,13 @@ function App() {
             return
           }
 
+          console.log('[loadPanels] Setting first panel as active and applying to editor')
           setPanels(results)
           setActivePanelId(results[0].id)
           applyPanelToEditor(results[0])
         }
-      } catch {
+      } catch (error) {
+        console.error('[loadPanels] Error loading panels:', error)
         if (!cancelled) {
           const fallbackPanel = createPanelRecord(0, [])
           setPanels([fallbackPanel])
@@ -360,13 +382,16 @@ function App() {
   }
 
   function setVideoFromFile(file: File) {
+    console.log('[setVideoFromFile] Loading video file:', file.name)
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl)
     }
 
     const nextUrl = URL.createObjectURL(file)
+    console.log('[setVideoFromFile] Created video object URL')
     setVideoUrl(nextUrl)
-    setCurrentTime(0)
+    // Don't reset currentTime - let the active panel's timestamp be preserved
+    // setCurrentTime(0)
   }
 
   async function captureAndPersistPanelRaster(panel: PanelRecord) {
@@ -431,6 +456,10 @@ function App() {
   }
 
   function applyPanelToEditor(panel: PanelRecord) {
+    console.log('[applyPanelToEditor] Called with panel timestamp:', panel.timestamp, 'panel ID:', panel.id)
+    console.log('[applyPanelToEditor] Video element ref:', videoRef.current, 'Video readyState:', videoRef.current?.readyState, 'Video currentTime:', videoRef.current?.currentTime)
+    pendingSeekTimeRef.current = panel.timestamp
+    console.log('[applyPanelToEditor] Set pendingSeekTimeRef to:', panel.timestamp)
     setCurrentTime(panel.timestamp)
     setBubbles(panel.bubbles.map((bubble) => cloneBubble(bubble)))
     setSelectedBubbleId(null)
@@ -562,9 +591,11 @@ function App() {
   function handleTimelineSync() {
     const node = videoRef.current
     if (!node) {
+      console.log('[handleTimelineSync] Video element not available')
       return
     }
 
+    console.log('[handleTimelineSync] Syncing video.currentTime:', node.currentTime, 'to currentTime state')
     resolveTime(node.currentTime)
   }
 
@@ -806,6 +837,18 @@ function App() {
                 const node = event.currentTarget
                 const width = Math.max(1, node.videoWidth)
                 const height = Math.max(1, node.videoHeight)
+                console.log('[onLoadedMetadata] Video metadata loaded. Width:', width, 'Height:', height)
+                console.log('[onLoadedMetadata] Video readyState:', node.readyState, 'Video currentTime:', node.currentTime, 'Expected currentTime (state):', currentTime)
+                console.log('[onLoadedMetadata] pendingSeekTimeRef:', pendingSeekTimeRef.current)
+                
+                // Apply pending seek if we have one
+                if (pendingSeekTimeRef.current !== null) {
+                  const targetTime = pendingSeekTimeRef.current
+                  console.log('[onLoadedMetadata] Seeking to pendingSeekTime:', targetTime)
+                  node.currentTime = targetTime
+                  pendingSeekTimeRef.current = null
+                }
+                
                 setVideoMetadata({ width, height })
               }}
               onSelectBubble={setSelectedBubbleId}
