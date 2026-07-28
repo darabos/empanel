@@ -59,9 +59,11 @@ function App() {
   const [panels, setPanels] = useState<PanelRecord[]>([])
   const [activePanelId, setActivePanelId] = useState<string | null>(null)
   const [panelThumbnailUrls, setPanelThumbnailUrls] = useState<Record<string, string>>({})
+  const [editorOverlayUrl, setEditorOverlayUrl] = useState<string | null>(null)
 
   const bubblesRef = useRef<Bubble[]>(bubbles)
   const panelThumbnailUrlsRef = useRef<Record<string, string>>({})
+  const editorOverlayUrlRef = useRef<string | null>(null)
 
   const selectedBubble = useMemo(
     () => bubbles.find((bubble) => bubble.id === selectedBubbleId) ?? null,
@@ -126,8 +128,37 @@ function App() {
       Object.values(panelThumbnailUrlsRef.current).forEach((url) => {
         URL.revokeObjectURL(url)
       })
+      if (editorOverlayUrlRef.current) {
+        URL.revokeObjectURL(editorOverlayUrlRef.current)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    renderPanelRasterBlob({
+      bubbles,
+      width: videoMetadata.width,
+      height: videoMetadata.height,
+      transparent: true,
+    }).then((blob) => {
+      if (cancelled || !blob) {
+        return
+      }
+
+      const url = URL.createObjectURL(blob)
+      if (editorOverlayUrlRef.current) {
+        URL.revokeObjectURL(editorOverlayUrlRef.current)
+      }
+      editorOverlayUrlRef.current = url
+      setEditorOverlayUrl(url)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [bubbles, videoMetadata.width, videoMetadata.height])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -765,7 +796,7 @@ function App() {
               videoRef={videoRef}
               viewportRef={viewportRef}
               videoUrl={videoUrl}
-              panelRasterUrl={activePanelId ? (panelThumbnailUrls[activePanelId] ?? null) : null}
+              panelRasterUrl={editorOverlayUrl}
               currentTime={currentTime}
               bubbles={bubbles}
               selectedBubbleId={selectedBubbleId}

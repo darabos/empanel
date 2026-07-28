@@ -1,10 +1,11 @@
 import type { Bubble } from '../types/annotation'
 
 type RenderPanelRasterInput = {
-  video: HTMLVideoElement
+  video?: HTMLVideoElement | null
   bubbles: Bubble[]
   width: number
   height: number
+  transparent?: boolean
   mimeType?: string
   quality?: number
 }
@@ -125,12 +126,15 @@ export async function renderPanelRasterBlob({
   bubbles,
   width,
   height,
-  mimeType = 'image/webp',
+  transparent = false,
+  mimeType,
   quality = 0.92,
 }: RenderPanelRasterInput): Promise<Blob | null> {
   if (!width || !height || !Number.isFinite(width) || !Number.isFinite(height)) {
     return null
   }
+
+  const resolvedMimeType = mimeType ?? (transparent ? 'image/png' : 'image/webp')
 
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -141,10 +145,16 @@ export async function renderPanelRasterBlob({
     return null
   }
 
-  try {
-    context.drawImage(video, 0, 0, width, height)
-  } catch {
-    return null
+  if (!transparent) {
+    if (!video) {
+      return null
+    }
+
+    try {
+      context.drawImage(video, 0, 0, width, height)
+    } catch {
+      return null
+    }
   }
 
   bubbles.forEach((bubble) => {
@@ -153,6 +163,6 @@ export async function renderPanelRasterBlob({
   })
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), mimeType, quality)
+    canvas.toBlob((blob) => resolve(blob), resolvedMimeType, quality)
   })
 }
