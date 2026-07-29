@@ -628,6 +628,7 @@ function App() {
 
   function startMoveBubble(event: React.PointerEvent<HTMLDivElement>, bubble: Bubble) {
     event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
     const point = pointerToFrameCoordinates(event.clientX, event.clientY)
     setSelectedBubbleId(bubble.id)
     setDragState({
@@ -641,6 +642,7 @@ function App() {
 
   function startResizeBubble(event: React.PointerEvent<HTMLButtonElement>, bubble: Bubble) {
     event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedBubbleId(bubble.id)
     setDragState({
       mode: 'resize',
@@ -653,6 +655,7 @@ function App() {
 
   function startTailDrag(event: React.PointerEvent<HTMLButtonElement>, bubble: Bubble) {
     event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedBubbleId(bubble.id)
     setDragState({
       mode: 'tail',

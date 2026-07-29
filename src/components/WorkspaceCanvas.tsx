@@ -62,7 +62,7 @@ export function WorkspaceCanvas({
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    
+
     // Draw bubbles
     drawBubblesOnContext(ctx, bubbles, videoMetadata.width, videoMetadata.height)
   }, [bubbles, videoMetadata.width, videoMetadata.height])
