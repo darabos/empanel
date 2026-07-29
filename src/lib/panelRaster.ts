@@ -198,12 +198,21 @@ export async function renderPanelRasterBlob({
     }
   }
 
-  bubbles.forEach((bubble) => {
-    drawTail(context, bubble, width, height)
-    drawBubble(context, bubble, width, height)
-  })
+  drawBubblesOnContext(context, bubbles, width, height)
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => resolve(blob), resolvedMimeType, quality)
+  })
+}
+
+export function drawBubblesOnContext(
+  context: CanvasRenderingContext2D,
+  bubbles: Bubble[],
+  width: number,
+  height: number,
+): void {
+  bubbles.forEach((bubble) => {
+    drawTail(context, bubble, width, height)
+    drawBubble(context, bubble, width, height)
   })
 }

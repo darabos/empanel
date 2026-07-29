@@ -1,11 +1,12 @@
 import type React from 'react'
+import { useEffect, useRef } from 'react'
 import type { Bubble, VideoMetadata } from '../types/annotation'
+import { drawBubblesOnContext } from '../lib/panelRaster'
 
 type WorkspaceCanvasProps = {
   videoRef: React.RefObject<HTMLVideoElement | null>
   viewportRef: React.RefObject<HTMLDivElement | null>
   videoUrl: string
-  panelRasterUrl: string | null
   currentTime: number
   bubbles: Bubble[]
   selectedBubbleId: string | null
@@ -28,7 +29,6 @@ export function WorkspaceCanvas({
   videoRef,
   viewportRef,
   videoUrl,
-  panelRasterUrl,
   currentTime,
   bubbles,
   selectedBubbleId,
@@ -46,6 +46,26 @@ export function WorkspaceCanvas({
   onPreviousFrame,
   onNextFrame,
 }: WorkspaceCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Draw bubbles directly onto canvas
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) {
+      return
+    }
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      return
+    }
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // Draw bubbles
+    drawBubblesOnContext(ctx, bubbles, videoMetadata.width, videoMetadata.height)
+  }, [bubbles, videoMetadata.width, videoMetadata.height])
   const fittedWidth = videoMetadata.width * fitScale
   const fittedHeight = videoMetadata.height * fitScale
   const layerStyle: React.CSSProperties = {
@@ -97,10 +117,11 @@ export function WorkspaceCanvas({
             onLoadedMetadata={onLoadedMetadata}
           />
 
-          {panelRasterUrl && (
-            <img
-              src={panelRasterUrl}
-              alt=""
+          {bubbles.length > 0 && (
+            <canvas
+              ref={canvasRef}
+              width={videoMetadata.width}
+              height={videoMetadata.height}
               className="raster-overlay"
             />
           )}

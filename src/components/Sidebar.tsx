@@ -2,7 +2,7 @@ import type { Bubble } from '../types/annotation'
 
 type SidebarProps = {
   selectedBubble: Bubble | null
-  onUpdateBubble: (bubbleId: string, updater: (bubble: Bubble) => Bubble) => void
+  onUpdateBubble: (bubbleId: string, updater: (bubble: Bubble) => Bubble, shouldCommit?: boolean) => void
   onDeleteSelectedBubble: () => void
   onOpenVideo: () => void
   onAddBubble: () => void
@@ -34,7 +34,13 @@ export function Sidebar({
                 onUpdateBubble(selectedBubble.id, (bubble) => ({
                   ...bubble,
                   text: event.target.value,
-                }))
+                }), false)
+              }
+              onBlur={() =>
+                onUpdateBubble(selectedBubble.id, (bubble) => ({
+                  ...bubble,
+                  text: bubble.text,
+                }), true)
               }
             />
           </label>
