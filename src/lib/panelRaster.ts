@@ -147,7 +147,7 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const padding = 40
   const maxWidth = Math.max(20, bubbleWidth - padding * 2)
   const offsetX = isNarration ? padding : bubbleWidth / 2
-  const fontSize = 50
+  const fontSize = 0.025 * width
   const lineHeight = fontSize * 1.2
 
   context.fillStyle = '#111111'
