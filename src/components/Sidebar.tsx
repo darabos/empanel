@@ -39,6 +39,36 @@ export function Sidebar({
             />
           </label>
 
+          <label>
+            Type
+            <div className="bubble-type-buttons">
+              <button
+                type="button"
+                className={selectedBubble.type === 'speech' ? 'active' : ''}
+                onClick={() =>
+                  onUpdateBubble(selectedBubble.id, (bubble) => ({
+                    ...bubble,
+                    type: 'speech',
+                  }))
+                }
+              >
+                💬 Speech
+              </button>
+              <button
+                type="button"
+                className={selectedBubble.type === 'thought' ? 'active' : ''}
+                onClick={() =>
+                  onUpdateBubble(selectedBubble.id, (bubble) => ({
+                    ...bubble,
+                    type: 'thought',
+                  }))
+                }
+              >
+                💭 Thought
+              </button>
+            </div>
+          </label>
+
           <button type="button" onClick={onDeleteSelectedBubble}>
             Delete Bubble
           </button>

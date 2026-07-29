@@ -614,6 +614,7 @@ function App() {
       tailX: 0.52,
       tailY: 0.5,
       text: '',
+      type: 'speech',
     }
 
     const next = [...bubbles, bubble]

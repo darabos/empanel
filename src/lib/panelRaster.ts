@@ -60,6 +60,14 @@ function getWrappedLines(
 }
 
 function drawTail(context: CanvasRenderingContext2D, bubble: Bubble, width: number, height: number) {
+  if (bubble.type === 'thought') {
+    drawThoughtBubbleTail(context, bubble, width, height)
+  } else {
+    drawSpeechBubbleTail(context, bubble, width, height)
+  }
+}
+
+function drawSpeechBubbleTail(context: CanvasRenderingContext2D, bubble: Bubble, width: number, height: number) {
   const bubbleWidth = bubble.right - bubble.left
   const bubbleHeight = bubble.bottom - bubble.top
   const centerX = (bubble.left + bubbleWidth / 2) * width
@@ -86,6 +94,32 @@ function drawTail(context: CanvasRenderingContext2D, bubble: Bubble, width: numb
   context.lineTo(base2X, base2Y)
   context.closePath()
   context.fill()
+}
+
+function drawThoughtBubbleTail(context: CanvasRenderingContext2D, bubble: Bubble, width: number, height: number) {
+  const bubbleWidth = bubble.right - bubble.left
+  const bubbleHeight = bubble.bottom - bubble.top
+  const centerX = (bubble.left + bubbleWidth / 2) * width
+  const centerY = (bubble.top + bubbleHeight / 2) * height
+  const tipX = bubble.tailX * width
+  const tipY = bubble.tailY * height
+
+  // Draw 4 circles of decreasing radius along the line from center to tail
+  const circles = 4
+  const minRadius = Math.min(width, height) * 0.015
+  const radiusStep = minRadius * 0.7
+
+  for (let i = 0; i < circles; i += 1) {
+    const t = (i + 1) / (circles + 1)
+    const x = centerX + (tipX - centerX) * t
+    const y = centerY + (tipY - centerY) * t
+    const radius = minRadius + radiusStep * (circles - i - 1)
+
+    context.fillStyle = '#ffffff'
+    context.beginPath()
+    context.arc(x, y, radius, 0, Math.PI * 2)
+    context.fill()
+  }
 }
 
 function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: number, height: number) {

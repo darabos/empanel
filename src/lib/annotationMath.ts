@@ -14,6 +14,7 @@ export function cloneBubble(bubble: Bubble): Bubble {
     tailX: bubble.tailX,
     tailY: bubble.tailY,
     text: bubble.text,
+    type: bubble.type,
   }
 }
 

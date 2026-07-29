@@ -204,6 +204,35 @@ button:disabled {
   resize: vertical;
 }
 
+.bubble-type-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.bubble-type-buttons button {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid rgba(45, 45, 45, 0.3);
+  background: rgba(255, 255, 255, 0.5);
+  color: #2d2d2d;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.bubble-type-buttons button:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(45, 45, 45, 0.5);
+}
+
+.bubble-type-buttons button.active {
+  background: #f7f2dc;
+  border-color: #2d2d2d;
+  box-shadow: 0 0 0 2px rgba(247, 242, 220, 0.5);
+}
+
 .storage-note {
   font-size: 0.88rem;
   background: rgba(255, 255, 255, 0.72);
