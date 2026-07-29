@@ -699,6 +699,7 @@ function App() {
     const activeDragState = dragState
 
     function handlePointerMove(event: PointerEvent) {
+      event.preventDefault()
       if (activeDragState.mode === 'tail') {
         const point = pointerToFrameCoordinates(event.clientX, event.clientY)
         updateCurrentBubble(

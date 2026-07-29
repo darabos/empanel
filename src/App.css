@@ -118,6 +118,10 @@ button:disabled {
   pointer-events: none;
 }
 
+.tail-svg {
+  touch-action: none;
+}
+
 .tail-svg polygon {
   fill: #fff;
 }
@@ -129,6 +133,7 @@ button:disabled {
   padding: 0;
   cursor: move;
   pointer-events: auto;
+  touch-action: none;
 }
 
 .resize-handle {
@@ -141,6 +146,7 @@ button:disabled {
   border-radius: 50%;
   border: 1px solid #0c0c0c;
   background: #ffffff;
+  touch-action: none;
 }
 
 .tail-handle {
