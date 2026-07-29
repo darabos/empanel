@@ -95,7 +95,7 @@ export function safeParsePersistedState(rawValue: string | null): PersistedState
             tailX: clamp(bubble.tailX, 0, 1),
             tailY: clamp(bubble.tailY, 0, 1),
             text: bubble.text,
-            type: (bubble.type === 'thought' ? 'thought' : 'speech') as 'speech' | 'thought',
+            type: (bubble.type === 'thought' ? 'thought' : bubble.type === 'narration' ? 'narration' : 'speech') as 'speech' | 'thought' | 'narration',
           })),
       }))
 

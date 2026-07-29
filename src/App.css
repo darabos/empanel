@@ -338,7 +338,7 @@ button:disabled {
 }
 
 .panel-list li.active .panel-thumb {
-  outline: auto 3px black;
+  outline: dashed 3px black;
 }
 
 @media (max-width: 1080px) {

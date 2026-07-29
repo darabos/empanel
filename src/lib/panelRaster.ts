@@ -60,6 +60,10 @@ function getWrappedLines(
 }
 
 function drawTail(context: CanvasRenderingContext2D, bubble: Bubble, width: number, height: number) {
+  if (bubble.type === 'narration') {
+    // Narration bubbles have no tail
+    return
+  }
   if (bubble.type === 'thought') {
     drawThoughtBubbleTail(context, bubble, width, height)
   } else {
@@ -131,7 +135,7 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const bubbleWidth = (bubble.right - bubble.left) * width
   const bubbleHeight = (bubble.bottom - bubble.top) * height
 
-  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, 200)
+  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, bubble.type === 'narration' ? 2 : 200)
   context.fillStyle = '#ffffff'
   context.fill()
   context.lineWidth = Math.max(2, Math.min(width, height) * 0.003)

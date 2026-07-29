@@ -66,6 +66,18 @@ export function Sidebar({
               >
                 💭 Thought
               </button>
+              <button
+                type="button"
+                className={selectedBubble.type === 'narration' ? 'active' : ''}
+                onClick={() =>
+                  onUpdateBubble(selectedBubble.id, (bubble) => ({
+                    ...bubble,
+                    type: 'narration',
+                  }))
+                }
+              >
+                📖 Narration
+              </button>
             </div>
           </label>
 

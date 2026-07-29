@@ -7,7 +7,7 @@ export type Bubble = {
   tailX: number
   tailY: number
   text: string
-  type: 'speech' | 'thought'
+  type: 'speech' | 'thought' | 'narration'
 }
 
 export type TimelineSnapshot = {
