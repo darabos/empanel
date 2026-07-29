@@ -134,8 +134,9 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const y = bubble.top * height
   const bubbleWidth = (bubble.right - bubble.left) * width
   const bubbleHeight = (bubble.bottom - bubble.top) * height
+  const isNarration = bubble.type === 'narration'
 
-  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, bubble.type === 'narration' ? 2 : 200)
+  drawRoundedRect(context, x, y, bubbleWidth, bubbleHeight, isNarration ? 2 : 200)
   context.fillStyle = '#ffffff'
   context.fill()
   context.lineWidth = Math.max(2, Math.min(width, height) * 0.003)
@@ -143,13 +144,14 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   context.stroke()
 
   const text = bubble.text || '...'
-  const padding = Math.max(8, Math.min(width, height) * 0.01)
+  const padding = 40
   const maxWidth = Math.max(20, bubbleWidth - padding * 2)
+  const offsetX = isNarration ? padding : bubbleWidth / 2
   const fontSize = 50
   const lineHeight = fontSize * 1.2
 
   context.fillStyle = '#111111'
-  context.textAlign = 'center'
+  context.textAlign = isNarration ? 'left' : 'center'
   context.textBaseline = 'middle'
   context.font = `${fontSize}px Grandstander, "Avenir Next", "Segoe UI", sans-serif`
 
@@ -158,7 +160,7 @@ function drawBubble(context: CanvasRenderingContext2D, bubble: Bubble, width: nu
   const startY = y + bubbleHeight / 2 - totalHeight / 2 + lineHeight / 2
 
   lines.forEach((line, index) => {
-    context.fillText(line, x + bubbleWidth / 2, startY + index * lineHeight, maxWidth)
+    context.fillText(line, x + offsetX, startY + index * lineHeight, maxWidth)
   })
 }
 
