@@ -946,8 +946,8 @@ function App() {
         className="editor"
       >
 
-        {videoUrl && (
-          <div className="workspace-grid">
+        <div className="workspace-grid">
+          {videoUrl && (
             <WorkspaceCanvas
               videoRef={videoRef}
               viewportRef={viewportRef}
@@ -987,16 +987,16 @@ function App() {
               onPreviousFrame={handlePreviousFrame}
               onNextFrame={handleNextFrame}
             />
+          )}
 
-            <Sidebar
-              selectedBubble={selectedBubble}
-              onUpdateBubble={updateCurrentBubble}
-              onDeleteSelectedBubble={handleDeleteSelectedBubble}
-              onOpenVideo={handleOpenVideo}
-              onAddBubble={handleAddBubble}
-            />
-          </div>
-        )}
+          <Sidebar
+            selectedBubble={selectedBubble}
+            onUpdateBubble={updateCurrentBubble}
+            onDeleteSelectedBubble={handleDeleteSelectedBubble}
+            onOpenVideo={handleOpenVideo}
+            onAddBubble={handleAddBubble}
+          />
+        </div>
       </section>
 
       <section className="panel-library">
