@@ -286,30 +286,18 @@ button:disabled {
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
 }
 
 .panel-list li {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  display: inline-block;
 }
 
-.panel-list li > button:first-child {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.panel-thumb-wrap {
-  width: 72px;
-  height: 40px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.08);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.panel-list li button {
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .panel-thumb {
@@ -317,12 +305,11 @@ button:disabled {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 5px;
 }
 
-.panel-list li.active {
-  outline: 2px solid rgba(45, 45, 45, 0.3);
-  border-radius: 8px;
-  padding: 4px;
+.panel-list li.active .panel-thumb {
+  outline: auto 3px black;
 }
 
 @media (max-width: 1080px) {

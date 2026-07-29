@@ -917,7 +917,6 @@ function App() {
                       />
                     )}
                   </span>
-                  <span>{panel.timestamp.toFixed(2)}s</span>
                 </button>
               </li>
             ))}
