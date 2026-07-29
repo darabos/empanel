@@ -104,16 +104,19 @@ function drawThoughtBubbleTail(context: CanvasRenderingContext2D, bubble: Bubble
   const tipX = bubble.tailX * width
   const tipY = bubble.tailY * height
 
-  // Draw 4 circles of decreasing radius along the line from center to tail
-  const circles = 4
+  const circles = 3
+  const offset = Math.min(bubbleWidth * width, bubbleHeight * height) * 0.5
   const minRadius = Math.min(width, height) * 0.015
   const radiusStep = minRadius * 0.7
-
+  const radiuses = Array.from({ length: circles }, (_, i) => minRadius + radiusStep * (circles - i - 1))
+  const filledTotal = radiuses.reduce((sum, r) => sum + r * 2, offset)
+  const dist = Math.hypot(tipX - centerX, tipY - centerY)
   for (let i = 0; i < circles; i += 1) {
-    const t = (i + 1) / (circles + 1)
-    const x = centerX + (tipX - centerX) * t
-    const y = centerY + (tipY - centerY) * t
     const radius = minRadius + radiusStep * (circles - i - 1)
+    const filledSoFar = radiuses.slice(0, i).reduce((sum, r) => sum + r * 2, radius + offset)
+    const t = filledSoFar + (dist - filledTotal) * (i + 1) / (circles + 1)
+    const x = centerX + (tipX - centerX) * t / dist
+    const y = centerY + (tipY - centerY) * t / dist
 
     context.fillStyle = '#ffffff'
     context.beginPath()
