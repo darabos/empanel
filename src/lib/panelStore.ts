@@ -12,6 +12,7 @@ type PanelDb = DBSchema & {
     value: PanelRecord
     indexes: {
       'by-timestamp': number
+      'by-sortOrder': number
     }
   }
   panelRasters: {
@@ -24,6 +25,7 @@ const panelDbPromise = openDB<PanelDb>(DB_NAME, DB_VERSION, {
   upgrade(database) {
     const panels = database.createObjectStore(PANEL_STORE, { keyPath: 'id' })
     panels.createIndex('by-timestamp', 'timestamp')
+    panels.createIndex('by-sortOrder', 'sortOrder')
 
     database.createObjectStore(PANEL_RASTER_STORE, { keyPath: 'panelId' })
   },
@@ -32,7 +34,7 @@ const panelDbPromise = openDB<PanelDb>(DB_NAME, DB_VERSION, {
 export async function listPanelsByCreatedAtAsc() {
   const db = await panelDbPromise
   const results = await db.getAll(PANEL_STORE)
-  return results.sort((a, b) => a.createdAt - b.createdAt)
+  return results.sort((a, b) => a.sortOrder - b.sortOrder)
 }
 
 export async function getPanelById(id: string) {

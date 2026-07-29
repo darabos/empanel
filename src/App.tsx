@@ -42,6 +42,7 @@ function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const pendingSeekTimeRef = useRef<number | null>(null)
+  const dragSourceIndexRef = useRef<number | null>(null)
 
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoMetadata, setVideoMetadata] = useState<VideoMetadata>({ width: 1280, height: 720 })
@@ -450,13 +451,13 @@ function App() {
   function createPanelRecord(
     timestamp: number,
     nextBubbles: Bubble[],
+    sortOrder: number = Date.now(),
   ): PanelRecord {
-    const now = Date.now()
     return {
       id: createPanelId(),
       timestamp,
       bubbles: nextBubbles.map((bubble) => cloneBubble(bubble)),
-      createdAt: now,
+      sortOrder,
     }
   }
 
@@ -496,7 +497,7 @@ function App() {
       })
 
       const withoutExisting = previous.filter((panel) => panel.id !== existing.id)
-      return [...withoutExisting, updated].sort((a, b) => a.createdAt - b.createdAt)
+      return [...withoutExisting, updated].sort((a, b) => a.sortOrder - b.sortOrder)
     })
   }
 
@@ -767,9 +768,50 @@ function App() {
     }
   }
 
+  function handlePanelDragStart(event: React.DragEvent, index: number) {
+    dragSourceIndexRef.current = index
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  function handlePanelDragOver(event: React.DragEvent) {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+  }
+
+  function handlePanelDrop(event: React.DragEvent, dropIndex: number) {
+    event.preventDefault()
+    const sourceIndex = dragSourceIndexRef.current
+    if (sourceIndex === null || sourceIndex === dropIndex) {
+      dragSourceIndexRef.current = null
+      return
+    }
+
+    setPanels((previous) => {
+      const next = [...previous]
+      const [movedPanel] = next.splice(sourceIndex, 1)
+      next.splice(dropIndex, 0, movedPanel)
+
+      // Update sortOrder for all panels to persist the new order
+      const baseOrder = 1000
+      next.forEach((panel, index) => {
+        panel.sortOrder = baseOrder + index * 100
+        upsertPanel(panel).catch(() => {
+          // Keep UI responsive even if IndexedDB write fails
+        })
+      })
+
+      return next
+    })
+
+    dragSourceIndexRef.current = null
+  }
+
   function handleCreateNewPanel() {
-    const panel = createPanelRecord(currentTime, [])
-    setPanels((previous) => [...previous, panel].sort((a, b) => a.createdAt - b.createdAt))
+    const maxOrder = panels.length === 0 ? 999 : Math.max(...panels.map((p) => p.sortOrder ?? 0))
+    const newSortOrder = maxOrder + 100
+    const panel = createPanelRecord(currentTime, [], newSortOrder)
+
+    setPanels((previous) => [...previous, panel])
     setActivePanelId(panel.id)
     setBubbles([])
     setSelectedBubbleId(null)
@@ -906,8 +948,15 @@ function App() {
         {panels.length === 0 && <p>No panels yet.</p>}
         {panels.length > 0 && (
           <ul className="panel-list">
-            {panels.map((panel) => (
-              <li key={panel.id} className={panel.id === activePanelId ? 'active' : ''}>
+            {panels.map((panel, index) => (
+              <li
+                key={panel.id}
+                className={panel.id === activePanelId ? 'active' : ''}
+                draggable
+                onDragStart={(event) => handlePanelDragStart(event, index)}
+                onDragOver={handlePanelDragOver}
+                onDrop={(event) => handlePanelDrop(event, index)}
+              >
                 <button type="button" onClick={() => handleOpenPanel(panel)}>
                   <span className="panel-thumb-wrap">
                     {panelThumbnailUrls[panel.id] && (

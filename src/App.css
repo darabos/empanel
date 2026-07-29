@@ -323,10 +323,20 @@ button:disabled {
   display: inline-block;
 }
 
+.panel-list li[draggable="true"] {
+  cursor: move;
+}
+
 .panel-list li button {
   padding: 0;
   border: 0;
   background: none;
+}
+
+.panel-list li:hover .panel-thumb-wrap {
+  opacity: 0.8;
+  transform: scale(1.02);
+  transition: all 150ms ease;
 }
 
 .panel-thumb {

@@ -49,7 +49,7 @@ export type PanelRecord = {
   id: string
   timestamp: number
   bubbles: Bubble[]
-  createdAt: number
+  sortOrder: number
 }
 
 export type PanelRasterRecord = {
