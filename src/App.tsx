@@ -31,6 +31,7 @@ import type {
   VideoMetadata,
   PanelRecord,
 } from './types/annotation'
+import GitHubIcon from './assets/GitHub_Invertocat_Black.svg'
 
 declare global {
   interface Window {
@@ -915,124 +916,133 @@ function App() {
 
   return (
     <main className="app-shell">
-      <section
-        className="editor"
-      >
-
-        <div className="workspace-grid">
-          {videoUrl && (
-            <WorkspaceCanvas
-              videoRef={videoRef}
-              viewportRef={viewportRef}
-              videoUrl={videoUrl}
-              currentTime={currentTime}
-              bubbles={bubbles}
-              selectedBubbleId={selectedBubbleId}
-              videoMetadata={videoMetadata}
-              fitScale={fitScale}
-              baseOffsetX={baseOffsetX}
-              baseOffsetY={baseOffsetY}
-              onTimelineSync={handleTimelineSync}
-              onLoadedMetadata={(event) => {
-                const node = event.currentTarget
-                const width = Math.max(1, node.videoWidth)
-                const height = Math.max(1, node.videoHeight)
-                console.log('[onLoadedMetadata] Video metadata loaded. Width:', width, 'Height:', height)
-                console.log('[onLoadedMetadata] Video readyState:', node.readyState, 'Video currentTime:', node.currentTime, 'Expected currentTime (state):', currentTime)
-                console.log('[onLoadedMetadata] pendingSeekTimeRef:', pendingSeekTimeRef.current)
-
-                // Apply pending seek if we have one
-                if (pendingSeekTimeRef.current !== null) {
-                  const targetTime = pendingSeekTimeRef.current
-                  console.log('[onLoadedMetadata] Seeking to pendingSeekTime:', targetTime)
-                  node.currentTime = targetTime
-                  pendingSeekTimeRef.current = null
-                }
-
-                setVideoMetadata({ width, height })
-              }}
-              onSelectBubble={setSelectedBubbleId}
-              onDeselectBubble={() => setSelectedBubbleId(null)}
-              onStartMoveBubble={startMoveBubble}
-              onStartResizeBubble={startResizeBubble}
-              onStartTailDrag={startTailDrag}
-              onPreviousFrame={handlePreviousFrame}
-              onNextFrame={handleNextFrame}
-            />
-          )}
-
-          <Sidebar
-            selectedBubble={selectedBubble}
-            onUpdateBubble={updateCurrentBubble}
-            onDeleteSelectedBubble={handleDeleteSelectedBubble}
-            onOpenVideo={handleOpenVideo}
-            onAddBubble={handleAddBubble}
-          />
-        </div>
-      </section>
-
-      <section className="panel-library">
-        <div className="panel-library-header">
-          <h2>Panels</h2>
-          <div className="panel-scale-slider">
-            <label htmlFor="panel-columns-slider" className="panel-scale-label">
-              {panelGridColumns}×
-            </label>
-            <input
-              id="panel-columns-slider"
-              type="range"
-              min="1"
-              max="5"
-              value={panelGridColumns}
-              onChange={(e) => setPanelGridColumns(Number(e.target.value))}
-              title="Panel grid columns"
-            />
-          </div>
-          <button type="button" onClick={handleCreateNewPanel}>
-            New panel
+      {!videoUrl ? (
+        <div className="centered-open-video">
+          <h1>Empanel</h1>
+          <button type="button" onClick={handleOpenVideo}>
+            Load video file...
           </button>
-          {activePanelId && (
-            <>
-              <button type="button" onClick={handleMovePanelLeft} title="Move panel left">
-                ← Move
-              </button>
-              <button type="button" onClick={handleMovePanelRight} title="Move panel right">
-                Move →
-              </button>
-              <button type="button" onClick={() => handleDeletePanel(activePanelId)}>
-                Delete panel
-              </button>
-            </>
-          )}
+          <p>Turn a video into a comic book! Pick a video. Select frames. Add bubbles.</p>
+          <p>Your data is stored locally in your browser. No data is shared with the developer.</p>
+          <p>Inspired by the legendary <a href="https://www.darthsanddroids.net/">Darths & Droids</a>.</p>
         </div>
-        {panels.length === 0 && <p>No panels yet.</p>}
-        {panels.length > 0 && (
-          <ul className="panel-list" data-columns={panelGridColumns}>
-            {panels.map((panel, index) => (
-              <li
-                key={panel.id}
-                className={panel.id === activePanelId ? 'active' : ''}
-                draggable
-                onDragStart={(event) => handlePanelDragStart(event, index)}
-                onDragOver={handlePanelDragOver}
-                onDrop={(event) => handlePanelDrop(event, index)}
-              >
-                <button type="button" onClick={() => handleOpenPanel(panel)}>
-                  <span className="panel-thumb-wrap">
-                    {panelThumbnailUrls[panel.id] && (
-                      <img
-                        src={panelThumbnailUrls[panel.id]}
-                        alt={`Panel at ${panel.timestamp.toFixed(2)} seconds`}
-                        className="panel-thumb"
-                      />
-                    )}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      ) : (
+        <>
+          <section className="editor">
+            <div className="workspace-grid">
+              <WorkspaceCanvas
+                videoRef={videoRef}
+                viewportRef={viewportRef}
+                videoUrl={videoUrl}
+                currentTime={currentTime}
+                bubbles={bubbles}
+                selectedBubbleId={selectedBubbleId}
+                videoMetadata={videoMetadata}
+                fitScale={fitScale}
+                baseOffsetX={baseOffsetX}
+                baseOffsetY={baseOffsetY}
+                onTimelineSync={handleTimelineSync}
+                onLoadedMetadata={(event) => {
+                  const node = event.currentTarget
+                  const width = Math.max(1, node.videoWidth)
+                  const height = Math.max(1, node.videoHeight)
+                  console.log('[onLoadedMetadata] Video metadata loaded. Width:', width, 'Height:', height)
+                  console.log('[onLoadedMetadata] Video readyState:', node.readyState, 'Video currentTime:', node.currentTime, 'Expected currentTime (state):', currentTime)
+                  console.log('[onLoadedMetadata] pendingSeekTimeRef:', pendingSeekTimeRef.current)
+
+                  // Apply pending seek if we have one
+                  if (pendingSeekTimeRef.current !== null) {
+                    const targetTime = pendingSeekTimeRef.current
+                    console.log('[onLoadedMetadata] Seeking to pendingSeekTime:', targetTime)
+                    node.currentTime = targetTime
+                    pendingSeekTimeRef.current = null
+                  }
+
+                  setVideoMetadata({ width, height })
+                }}
+                onSelectBubble={setSelectedBubbleId}
+                onDeselectBubble={() => setSelectedBubbleId(null)}
+                onStartMoveBubble={startMoveBubble}
+                onStartResizeBubble={startResizeBubble}
+                onStartTailDrag={startTailDrag}
+                onPreviousFrame={handlePreviousFrame}
+                onNextFrame={handleNextFrame}
+              />
+
+              <Sidebar
+                selectedBubble={selectedBubble}
+                onUpdateBubble={updateCurrentBubble}
+                onDeleteSelectedBubble={handleDeleteSelectedBubble}
+                onOpenVideo={handleOpenVideo}
+                onAddBubble={handleAddBubble}
+              />
+            </div>
+          </section>
+
+          <section className="panel-library">
+            <div className="panel-library-header">
+              <h2>Panels</h2>
+              <div className="panel-scale-slider">
+                <label htmlFor="panel-columns-slider" className="panel-scale-label">
+                  {panelGridColumns}×
+                </label>
+                <input
+                  id="panel-columns-slider"
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={panelGridColumns}
+                  onChange={(e) => setPanelGridColumns(Number(e.target.value))}
+                  title="Panel grid columns"
+                />
+              </div>
+              <button type="button" onClick={handleCreateNewPanel}>
+                New panel
+              </button>
+              {activePanelId && (
+                <>
+                  <button type="button" onClick={handleMovePanelLeft} title="Move panel left">
+                    ← Move
+                  </button>
+                  <button type="button" onClick={handleMovePanelRight} title="Move panel right">
+                    Move →
+                  </button>
+                  <button type="button" onClick={() => handleDeletePanel(activePanelId)}>
+                    Delete panel
+                  </button>
+                </>
+              )}
+            </div>
+            {panels.length === 0 && <p>No panels yet.</p>}
+            {panels.length > 0 && (
+              <ul className="panel-list" data-columns={panelGridColumns}>
+                {panels.map((panel, index) => (
+                  <li
+                    key={panel.id}
+                    className={panel.id === activePanelId ? 'active' : ''}
+                    draggable
+                    onDragStart={(event) => handlePanelDragStart(event, index)}
+                    onDragOver={handlePanelDragOver}
+                    onDrop={(event) => handlePanelDrop(event, index)}
+                  >
+                    <button type="button" onClick={() => handleOpenPanel(panel)}>
+                      <span className="panel-thumb-wrap">
+                        {panelThumbnailUrls[panel.id] && (
+                          <img
+                            src={panelThumbnailUrls[panel.id]}
+                            alt={`Panel at ${panel.timestamp.toFixed(2)} seconds`}
+                            className="panel-thumb"
+                          />
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
 
       {showLoadVideoModal && savedVideoHandle && (
         <div className="load-video-modal-backdrop" role="dialog" aria-modal="true">
@@ -1058,6 +1068,11 @@ function App() {
           </div>
         </div>
       )}
+          <p style={{ textAlign: 'center' }}>
+            <a href="https://github.com/darabos/empanel/">
+              <img style={{ height: '40px' }} src={GitHubIcon} alt="GitHub" />
+            </a>
+          </p>
     </main>
   )
 }

@@ -7,6 +7,15 @@
   gap: 18px;
 }
 
+.centered-open-video {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  flex: 1;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
