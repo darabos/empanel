@@ -131,11 +131,6 @@ button:disabled {
   pointer-events: auto;
 }
 
-.bubble-card.selected {
-  outline: 2px dashed rgba(75, 240, 205, 0.85);
-  border-radius: 14px;
-}
-
 .resize-handle {
   position: absolute;
   right: -7px;
@@ -361,6 +356,7 @@ button:disabled {
 }
 
 .panel-list li button {
+  display: block;
   padding: 0;
   border: 0;
   background: none;
