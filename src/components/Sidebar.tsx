@@ -18,10 +18,10 @@ export function Sidebar({
   return (
     <aside className="inspector">
       <button type="button" onClick={onOpenVideo}>
-        Open Video
+        Load video file
       </button>
       <button type="button" onClick={onAddBubble}>
-        Add Bubble
+        Add bubble
       </button>
       {selectedBubble && (
         <div className="inspector-form">
@@ -88,7 +88,7 @@ export function Sidebar({
           </label>
 
           <button type="button" onClick={onDeleteSelectedBubble}>
-            Delete Bubble
+            Delete bubble
           </button>
         </div>
       )}

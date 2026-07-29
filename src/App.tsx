@@ -360,7 +360,7 @@ function App() {
       setShowLoadVideoModal(false)
       setSavedVideoError(null)
     } catch {
-      setSavedVideoError('Could not load the saved video handle. Please use Open Video.')
+      setSavedVideoError('Could not load the saved video handle. Please load a video manually.')
     } finally {
       setIsLoadingSavedVideo(false)
     }
