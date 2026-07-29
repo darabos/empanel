@@ -874,6 +874,64 @@ function App() {
     })
   }
 
+  function handleMovePanelLeft() {
+    if (!activePanelId) {
+      return
+    }
+
+    setPanels((previous) => {
+      const currentIndex = previous.findIndex((p) => p.id === activePanelId)
+      if (currentIndex <= 0) {
+        return previous
+      }
+
+      const next = [...previous]
+      const temp = next[currentIndex]
+      next[currentIndex] = next[currentIndex - 1]
+      next[currentIndex - 1] = temp
+
+      // Reassign sortOrder to persist the new order
+      const baseOrder = 1000
+      next.forEach((panel, index) => {
+        panel.sortOrder = baseOrder + index * 100
+        upsertPanel(panel).catch(() => {
+          // Keep UI responsive even if IndexedDB write fails
+        })
+      })
+
+      return next
+    })
+  }
+
+  function handleMovePanelRight() {
+    if (!activePanelId) {
+      return
+    }
+
+    setPanels((previous) => {
+      const currentIndex = previous.findIndex((p) => p.id === activePanelId)
+      if (currentIndex >= previous.length - 1) {
+        return previous
+      }
+
+      const next = [...previous]
+      const temp = next[currentIndex]
+      next[currentIndex] = next[currentIndex + 1]
+      next[currentIndex + 1] = temp
+
+      // Reassign sortOrder to persist the new order
+      const baseOrder = 1000
+      next.forEach((panel, index) => {
+        panel.sortOrder = baseOrder + index * 100
+        upsertPanel(panel).catch(() => {
+          // Keep UI responsive even if IndexedDB write fails
+        })
+      })
+
+      return next
+    })
+  }
+
   return (
     <main className="app-shell">
       <section
@@ -940,9 +998,17 @@ function App() {
             New panel
           </button>
           {activePanelId && (
-            <button type="button" onClick={() => handleDeletePanel(activePanelId)}>
-              Delete panel
-            </button>
+            <>
+              <button type="button" onClick={handleMovePanelLeft} title="Move panel left">
+                ← Move
+              </button>
+              <button type="button" onClick={handleMovePanelRight} title="Move panel right">
+                Move →
+              </button>
+              <button type="button" onClick={() => handleDeletePanel(activePanelId)}>
+                Delete panel
+              </button>
+            </>
           )}
         </div>
         {panels.length === 0 && <p>No panels yet.</p>}
