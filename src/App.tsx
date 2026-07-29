@@ -62,6 +62,10 @@ function App() {
   const [activePanelId, setActivePanelId] = useState<string | null>(null)
   const [panelThumbnailUrls, setPanelThumbnailUrls] = useState<Record<string, string>>({})
   const [editorOverlayUrl, setEditorOverlayUrl] = useState<string | null>(null)
+  const [panelGridColumns, setPanelGridColumns] = useState<number>(() => {
+    const saved = localStorage.getItem('panel-grid-columns')
+    return saved ? Math.max(1, Math.min(5, parseInt(saved, 10))) : 3
+  })
 
   const bubblesRef = useRef<Bubble[]>(bubbles)
   const panelThumbnailUrlsRef = useRef<Record<string, string>>({})
@@ -108,6 +112,10 @@ function App() {
       window.clearTimeout(timeoutId)
     }
   }, [snapshots])
+
+  useEffect(() => {
+    localStorage.setItem('panel-grid-columns', String(panelGridColumns))
+  }, [panelGridColumns])
 
   useEffect(() => {
     if (videoUrl) {
@@ -994,6 +1002,20 @@ function App() {
       <section className="panel-library">
         <div className="panel-library-header">
           <h2>Panels</h2>
+          <div className="panel-scale-slider">
+            <label htmlFor="panel-columns-slider" className="panel-scale-label">
+              {panelGridColumns}×
+            </label>
+            <input
+              id="panel-columns-slider"
+              type="range"
+              min="1"
+              max="5"
+              value={panelGridColumns}
+              onChange={(e) => setPanelGridColumns(Number(e.target.value))}
+              title="Panel grid columns"
+            />
+          </div>
           <button type="button" onClick={handleCreateNewPanel}>
             New panel
           </button>
@@ -1013,7 +1035,7 @@ function App() {
         </div>
         {panels.length === 0 && <p>No panels yet.</p>}
         {panels.length > 0 && (
-          <ul className="panel-list">
+          <ul className="panel-list" data-columns={panelGridColumns}>
             {panels.map((panel, index) => (
               <li
                 key={panel.id}
