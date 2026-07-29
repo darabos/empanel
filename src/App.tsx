@@ -32,6 +32,7 @@ import type {
   PanelRecord,
 } from './types/annotation'
 import GitHubIcon from './assets/GitHub_Invertocat_Black.svg'
+import EmpanelIcon from './assets/empanel-icon.svg'
 
 declare global {
   interface Window {
@@ -918,7 +919,7 @@ function App() {
     <main className="app-shell">
       {!videoUrl ? (
         <div className="centered-open-video">
-          <h1>Empanel</h1>
+          <h1><img src={EmpanelIcon} alt="logo" style={{width: 30}} /> Empanel</h1>
           <button type="button" onClick={handleOpenVideo}>
             Load video file...
           </button>
